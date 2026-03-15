@@ -1,0 +1,31 @@
+﻿@model CineSync.Models.Subscription
+@{
+    ViewData["Title"] = "Abonament nou";
+}
+
+<div class="container mt-4" style="max-width:500px">
+    <h2>Abonament nou</h2>
+    <form asp-action="Create" method="post">
+        <div class="mb-3">
+            <label class="form-label">Platformă</label>
+            <select asp-for="PlatformId" class="form-select"
+                    asp-items="@(new SelectList(ViewBag.Platforms, "PlatformId", "Name"))">
+                <option value="">-- Selectează --</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Tip (ex: Monthly, Annual)</label>
+            <input asp-for="Type" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Preț lunar (lei)</label>
+            <input asp-for="MonthlyPrice" type="number" step="0.01" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Calitate video (ex: HD, 4K)</label>
+            <input asp-for="VideoQuality" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-success">Salvează</button>
+        <a asp-action="Manage" class="btn btn-secondary ms-2">Anulează</a>
+    </form>
+</div>

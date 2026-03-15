@@ -1,0 +1,146 @@
+﻿@model CineSync.Models.Movie
+@{
+    ViewData["Title"] = "Edit Movie";
+}
+
+<div class="container mt-4" style="max-width:700px">
+    <div class="d-flex align-items-center mb-3">
+        <a asp-action="Manage" class="btn btn-outline-secondary btn-sm me-3">← Back</a>
+        <h2 class="mb-0">Edit: @Model.Title</h2>
+    </div>
+
+    <form asp-action="Edit" method="post">
+        <input asp-for="MovieId" type="hidden" />
+        <input asp-for="PdfPath" type="hidden" />
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Title *</label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger small"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Year</label>
+                <input asp-for="Year" type="number" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Category</label>
+                <select asp-for="CategoryId" class="form-select"
+                        asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "Name"))">
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Poster URL</label>
+            <input asp-for="PosterPath" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Director</label>
+            <select asp-for="DirectorId" class="form-select">
+                <option value="">-- No director --</option>
+                @foreach (var dir in (IEnumerable<CineSync.Models.Director>)ViewBag.Directors)
+                {
+                    <option value="@dir.DirectorId"
+                            selected="@(dir.DirectorId == Model.DirectorId ? "selected" : null)">
+                        @dir.Name
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold border-bottom d-block pb-2">Cast</label>
+            <div id="actorList">
+                @if (Model.Casts != null)
+                {
+                    foreach (var cast in Model.Casts)
+                    {
+                        <div class="row g-2 mb-2 align-items-center actor-row shadow-sm p-2 bg-light rounded">
+                            <div class="col-md-4">
+                                <select name="selectedActors" class="form-select form-select-sm">
+                                    <option value="">-- Actor --</option>
+                                    @foreach (var actor in (IEnumerable<CineSync.Models.Actor>)ViewBag.Actors)
+                                    {
+                                        <option value="@actor.ActorId"
+                                                selected="@(actor.ActorId == cast.ActorId ? "selected" : null)">
+                                            @actor.Name
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="characterNames" class="form-control form-control-sm"
+                                       value="@cast.CharacterName" placeholder="Character name" />
+                            </div>
+                            <div class="col-md-3">
+                                <select name="roleTypes" class="form-select form-select-sm">
+                                    <option value="Lead" selected="@(cast.RoleType == "Lead" ? "selected" : null)">Lead</option>
+                                    <option value="Support" selected="@(cast.RoleType == "Support" ? "selected" : null)">Support</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger border-0"
+                                        onclick="this.closest('.actor-row').remove()">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addActor()">
+                + Add Actor
+            </button>
+        </div>
+
+        <hr />
+        <div class="d-flex justify-content-end gap-2">
+            <a asp-action="Manage" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-warning shadow-sm">💾 Save & Regenerate PDF</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        const availableActors = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    ((IEnumerable<CineSync.Models.Actor>)ViewBag.Actors)
+                    .Select(a => new { id = a.ActorId, name = a.Name })
+            ));
+
+    function addActor() {
+        const div = document.createElement('div');
+        div.className = 'row g-2 mb-2 align-items-center actor-row shadow-sm p-2 bg-light rounded';
+        div.innerHTML = `
+            <div class="col-md-4">
+                <select name="selectedActors" class="form-select form-select-sm">
+                    <option value="">-- Actor --</option>
+                    ${availableActors.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="characterNames" class="form-control form-control-sm" placeholder="Character name" />
+            </div>
+            <div class="col-md-3">
+                <select name="roleTypes" class="form-select form-select-sm">
+                    <option value="Lead">Lead</option>
+                    <option value="Support" selected>Support</option>
+                </select>
+            </div>
+            <div class="col-md-1 text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger border-0"
+                        onclick="this.closest('.actor-row').remove()">✕</button>
+            </div>
+        `;
+        document.getElementById('actorList').appendChild(div);
+    }
+</script>
+}

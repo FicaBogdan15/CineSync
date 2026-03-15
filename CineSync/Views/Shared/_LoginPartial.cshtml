@@ -1,0 +1,40 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using CineSync.Models
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    @* Secțiunea pentru utilizator logat *@
+    <li>
+        <h6 class="dropdown-header text-primary">Salut, @(User.Identity?.Name ?? "Utilizator")!</h6>
+    </li>
+    <li>
+        <a id="manage" class="dropdown-item d-flex align-items-center" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
+            <span class="material-symbols-outlined me-2" style="font-size: 18px;">settings</span> Profilul meu
+        </a>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li>
+        <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button id="logout" type="submit" class="dropdown-item d-flex align-items-center text-danger">
+                <span class="material-symbols-outlined me-2" style="font-size: 18px;">logout</span> Logout
+            </button>
+        </form>
+    </li>
+}
+else
+{
+    @* Secțiunea pentru vizitatori *@
+    <li>
+        <a class="dropdown-item d-flex align-items-center" id="register" asp-area="Identity" asp-page="/Account/Register">
+            <span class="material-symbols-outlined me-2" style="font-size: 18px;">person_add</span> Register
+        </a>
+    </li>
+    <li>
+        <a class="dropdown-item d-flex align-items-center" id="login" asp-area="Identity" asp-page="/Account/Login">
+            <span class="material-symbols-outlined me-2" style="font-size: 18px;">login</span> Login
+        </a>
+    </li>
+}

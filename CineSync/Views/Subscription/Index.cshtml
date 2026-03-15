@@ -1,0 +1,122 @@
+﻿@model IEnumerable<CineSync.Models.Subscription>
+@{
+    ViewData["Title"] = "Subscriptions";
+    var searchResults = ViewBag.SearchResults as List<(CineSync.Models.Subscription Subscription, double Score)>;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Available Subscriptions</h2>
+        <div class="d-flex gap-2">
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Manage" class="btn btn-danger btn-sm">⚙️ Manage</a>
+            }
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-action="Cart" class="btn btn-outline-primary btn-sm">🛒 My Cart</a>
+            }
+        </div>
+    </div>
+
+    <!-- Search + Filter -->
+    <form asp-action="Index" method="get" class="mb-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white">🔍</span>
+                    <input type="text" name="search" value="@ViewBag.Search"
+                           class="form-control" placeholder="Search by platform, type, quality..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="platformId" class="form-select">
+                    <option value="">All Platforms</option>
+                    @foreach (var p in (IEnumerable<CineSync.Models.Platform>)ViewBag.Platforms)
+                    {
+                        <option value="@p.PlatformId"
+                                selected="@(ViewBag.SelectedPlatform == p.PlatformId ? "selected" : null)">
+                            @p.Name
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="sortBy" class="form-select">
+                    <option value="">Default order</option>
+                    <option value="price_asc" selected="@(ViewBag.SortBy == "price_asc" ? "selected" : null)">
+                        Price ↑
+                    </option>
+                    <option value="price_desc" selected="@(ViewBag.SortBy == "price_desc" ? "selected" : null)">
+                        Price ↓
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+        {
+            <div class="mt-2">
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">✕ Clear</a>
+                <span class="text-muted ms-2 small">
+                    Results for "<strong>@ViewBag.Search</strong>"
+                    — @Model.Count() found
+                </span>
+            </div>
+        }
+    </form>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No subscriptions found.</div>
+    }
+    else
+    {
+        @foreach (var group in Model.GroupBy(s => s.Platform?.Name))
+        {
+            <h4 class="mt-4 border-bottom pb-2">@group.Key</h4>
+            <div class="row">
+                @foreach (var sub in group)
+                {
+                    double? score = searchResults?.FirstOrDefault(r => r.Subscription.SubscriptionId == sub.SubscriptionId).Score;
+
+                    <div class="col-md-3 mb-4">
+                        <div class="card shadow-sm h-100 border-0">
+                            <div class="card-body">
+                                <h5 class="card-title">@sub.Type</h5>
+                                <p class="fw-bold text-primary fs-5 mb-1">@sub.MonthlyPrice RON/mo</p>
+                                <p class="text-muted small mb-2">Quality: @sub.VideoQuality</p>
+                                @if (score.HasValue)
+                                {
+                                    <span class="badge bg-success bg-opacity-75 small">
+                                        relevance: @score.Value.ToString("F3")
+                                    </span>
+                                }
+                            </div>
+                            <div class="card-footer bg-white border-top-0 d-flex flex-column gap-2 pb-3">
+                                <a asp-action="Details" asp-route-id="@sub.SubscriptionId"
+                                   class="btn btn-outline-secondary btn-sm w-100">View Details</a>
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <form asp-action="AddToCart" method="post">
+                                        <input type="hidden" name="subscriptionId" value="@sub.SubscriptionId" />
+                                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                                            + Add to Cart
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <a asp-area="Identity" asp-page="/Account/Login"
+                                       class="btn btn-outline-secondary btn-sm w-100">Login to subscribe</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>

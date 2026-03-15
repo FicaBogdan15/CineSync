@@ -1,0 +1,57 @@
+﻿@model IEnumerable<CineSync.Models.Subscription>
+@{
+    ViewData["Title"] = "Administrare Abonamente";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Administrare Abonamente</h2>
+        <a asp-controller="Subscription" asp-action="Create" class="btn btn-success">+ Abonament nou</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Nu există abonamente încă.</div>
+    }
+    else
+    {
+        <table class="table table-striped shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Platformă</th>
+                    <th>Tip</th>
+                    <th>Preț/lună</th>
+                    <th>Calitate</th>
+                    <th>Acțiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sub in Model)
+                {
+                    <tr>
+                        <td>@sub.Platform?.Name</td>
+                        <td>@sub.Type</td>
+                        <td>@sub.MonthlyPrice lei</td>
+                        <td>@sub.VideoQuality</td>
+                        <td>
+                            <a asp-controller="Subscription" asp-action="Edit"
+                               asp-route-id="@sub.SubscriptionId"
+                               class="btn btn-sm btn-warning">Editează</a>
+                            <form asp-controller="Subscription" asp-action="Delete"
+                                  asp-route-id="@sub.SubscriptionId"
+                                  method="post" class="d-inline"
+                                  onsubmit="return confirm('Ștergi abonamentul?')">
+                                <button type="submit" class="btn btn-sm btn-danger">Șterge</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <a asp-controller="Subscription" asp-action="Index" class="btn btn-secondary mt-2">
+        ← Înapoi la abonamente
+    </a>
+</div>
