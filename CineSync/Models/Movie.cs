@@ -1,6 +1,4 @@
-﻿using CineSync.Models;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace CineSync.Models
 {
@@ -25,8 +23,11 @@ namespace CineSync.Models
         public int CategoryId { get; set; }
         public Category? Category { get; set; }
 
-        public ICollection<Cast>? Casts { get; set; }
-        public ICollection<Review>? Reviews { get; set; }
-        public ICollection<AvailableOn>? AvailableOnPlatforms { get; set; }
+        public ICollection<Cast> Casts { get; set; } = new List<Cast>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public ICollection<AvailableOn> AvailableOnPlatforms { get; set; } = new List<AvailableOn>();
+
+        public ICollection<MovieReaction> MovieReactions { get; set; } = new List<MovieReaction>();
+        public ICollection<WatchListItem> WatchListItems { get; set; } = new List<WatchListItem>();
     }
 }

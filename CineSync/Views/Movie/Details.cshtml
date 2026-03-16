@@ -5,6 +5,9 @@
     double? averageRating = ViewBag.AverageRating as double?;
     int reviewCount = ViewBag.ReviewCount != null ? (int)ViewBag.ReviewCount : 0;
     bool userHasReviewed = ViewBag.UserHasReviewed != null && (bool)ViewBag.UserHasReviewed;
+    bool isInWatchList = ViewBag.IsInWatchList != null && (bool)ViewBag.IsInWatchList;
+    bool isWatched = ViewBag.IsWatched != null && (bool)ViewBag.IsWatched;
+    bool? userReaction = ViewBag.UserReaction as bool?;
 }
 
 <div class="container mt-4">
@@ -75,6 +78,98 @@
 
             <h5>Description</h5>
             <p class="text-muted">@(Model.Description ?? "No description available.")</p>
+
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <div class="mt-4">
+                    <h5 class="mb-3">Your Reaction</h5>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @if (userReaction == true)
+                        {
+                            <span class="badge bg-success">Liked</span>
+                        }
+                        else if (userReaction == false)
+                        {
+                            <span class="badge bg-danger">Disliked</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-dark border">No reaction yet</span>
+                        }
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-block mb-4">
+                        <form asp-action="Like" method="post" class="d-inline">
+                            <input type="hidden" name="movieId" value="@Model.MovieId" />
+                            <button type="submit" class="btn btn-success me-2 mb-2">
+                                Like
+                            </button>
+                        </form>
+
+                        <form asp-action="Dislike" method="post" class="d-inline">
+                            <input type="hidden" name="movieId" value="@Model.MovieId" />
+                            <button type="submit" class="btn btn-danger mb-2">
+                                Dislike
+                            </button>
+                        </form>
+                    </div>
+
+                    <h5 class="mb-3">Watchlist</h5>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @if (isInWatchList)
+                        {
+                            <span class="badge bg-warning text-dark">In Watchlist</span>
+                        }
+
+                        @if (isWatched)
+                        {
+                            <span class="badge bg-dark">Watched</span>
+                        }
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-block">
+                        @if (!isInWatchList)
+                        {
+                            <form asp-controller="Recommendation" asp-action="AddToWatchList" method="post" class="d-inline">
+                                <input type="hidden" name="movieId" value="@Model.MovieId" />
+                                <button type="submit" class="btn btn-warning text-dark me-2 mb-2">
+                                    Add to Watchlist
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-controller="WatchList" asp-action="Remove" method="post" class="d-inline">
+                                <input type="hidden" name="movieId" value="@Model.MovieId" />
+                                <button type="submit" class="btn btn-outline-danger me-2 mb-2">
+                                    Remove from Watchlist
+                                </button>
+                            </form>
+                        }
+
+                        @if (!isWatched)
+                        {
+                            <form asp-controller="WatchList" asp-action="MarkWatched" method="post" class="d-inline">
+                                <input type="hidden" name="movieId" value="@Model.MovieId" />
+                                <button type="submit" class="btn btn-dark mb-2">
+                                    Mark as Watched
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-controller="WatchList" asp-action="MarkToWatch" method="post" class="d-inline">
+                                <input type="hidden" name="movieId" value="@Model.MovieId" />
+                                <button type="submit" class="btn btn-outline-dark mb-2">
+                                    Move Back to To Watch
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
 
             @if (Model.Casts != null && Model.Casts.Any())
             {

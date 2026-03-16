@@ -29,6 +29,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IPdfService,PdfService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 var app = builder.Build();
 

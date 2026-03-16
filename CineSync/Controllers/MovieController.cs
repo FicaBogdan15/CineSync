@@ -10,11 +10,16 @@ namespace CineSync.Controllers
     {
         private readonly IMovieService _movieService;
         private readonly IPdfService _pdfService;
+        private readonly IRecommendationService _recommendationService;
 
-        public MovieController(IMovieService movieService, IPdfService pdfService)
+        public MovieController(
+            IMovieService movieService,
+            IPdfService pdfService,
+            IRecommendationService recommendationService)
         {
             _movieService = movieService;
             _pdfService = pdfService;
+            _recommendationService = recommendationService;
         }
 
         public async Task<IActionResult> Index(int? categoryId, string? search)
@@ -64,13 +69,41 @@ namespace CineSync.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
                 ViewBag.UserHasReviewed = await _movieService.UserHasReviewedAsync(id, userId);
+                ViewBag.IsInWatchList = await _recommendationService.IsMovieInWatchListAsync(userId, id);
+                ViewBag.IsWatched = await _recommendationService.IsMovieWatchedAsync(userId, id);
+                ViewBag.UserReaction = (await _recommendationService.GetReactionAsync(userId, id))?.IsLiked;
             }
             else
             {
                 ViewBag.UserHasReviewed = false;
+                ViewBag.IsInWatchList = false;
+                ViewBag.IsWatched = false;
+                ViewBag.UserReaction = null;
             }
 
             return View(movie);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Like(int movieId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            await _recommendationService.SaveReactionAsync(userId, movieId, true);
+
+            TempData["ReviewSuccess"] = "Movie liked.";
+            return RedirectToAction("Details", new { id = movieId });
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Dislike(int movieId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            await _recommendationService.SaveReactionAsync(userId, movieId, false);
+
+            TempData["ReviewSuccess"] = "Movie disliked.";
+            return RedirectToAction("Details", new { id = movieId });
         }
 
         [HttpPost]
