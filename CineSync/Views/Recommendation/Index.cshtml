@@ -4,10 +4,10 @@
     ViewData["Title"] = "Recommendations";
 }
 
-<div class="container-fluid mt-4 px-4">
+<div class="cs-max-1400">
     <div class="mb-4">
-        <h2 class="fw-bold">Recommendations</h2>
-        <p class="text-muted mb-0">Discover movies tailored for you.</p>
+        <h2>Recommendations</h2>
+        <p class="cs-muted mb-0">Discover movies tailored for you.</p>
     </div>
 
     @if (TempData["Info"] != null)
@@ -26,53 +26,56 @@
             No recommendations are available right now.
         </div>
 
-        <a asp-controller="Movie" asp-action="Index" class="btn btn-primary">
+        <a asp-controller="Movie" asp-action="Index" class="btn cs-btn cs-btn-blue">
             Browse Movies
         </a>
     }
     else
     {
-        <div class="row g-4 align-items-stretch">
-            <div class="col-lg-4 d-flex flex-column">
-                <div class="card shadow-sm border-0 mb-3 overflow-hidden">
+        <div class="cs-recommendation-layout">
+            <div class="d-flex flex-column gap-4">
+                <div>
                     @if (!string.IsNullOrEmpty(Model.Movie.PosterPath))
                     {
-                        <img src="@Model.Movie.PosterPath"
-                             alt="@Model.Movie.Title"
-                             class="img-fluid w-100"
-                             style="height: 360px; object-fit: cover;" />
+                        <div class="cs-image-shell">
+                            <img src="@Model.Movie.PosterPath"
+                                 alt="@Model.Movie.Title"
+                                 class="cs-poster cs-poster-md cs-poster-plain"
+                                 width="560"
+                                 height="420"
+                                 loading="lazy"
+                                 decoding="async" />
+                        </div>
                     }
                     else
                     {
-                        <div class="d-flex align-items-center justify-content-center bg-light"
-                             style="height: 360px;">
-                            <span class="display-3 text-muted">Movie</span>
+                        <div class="cs-poster-placeholder cs-poster-md">
+                            <span class="display-3">Movie</span>
                         </div>
                     }
                 </div>
 
-                <div class="card shadow-lg border-0 flex-grow-1">
-                    <div class="card-body d-flex flex-column">
+                <div class="cs-card p-4 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h3 class="fw-bold mb-0">@Model.Movie.Title</h3>
-                            <span class="badge bg-primary">
+                            <h3 class="mb-0">@Model.Movie.Title</h3>
+                            <span class="cs-badge cs-badge-dark">
                                 @(Model.CurrentIndex + 1) / @Model.TotalRecommendations
                             </span>
                         </div>
 
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            <span class="badge bg-info text-dark">@Model.Movie.Category?.Name</span>
-                            <span class="badge bg-secondary">@Model.Movie.Year</span>
+                            <span class="cs-badge cs-badge-category">@Model.Movie.Category?.Name</span>
+                            <span class="cs-badge cs-badge-meta">@Model.Movie.Year</span>
 
                             @if (Model.AverageRating.HasValue)
                             {
-                                <span class="badge bg-warning text-dark">
+                                <span class="cs-badge cs-badge-rating">
                                     Rating @Model.AverageRating.Value.ToString("F1") / 10
                                 </span>
                             }
                             else
                             {
-                                <span class="badge bg-light text-dark border">
+                                <span class="cs-badge cs-badge-meta">
                                     No rating yet
                                 </span>
                             }
@@ -89,10 +92,10 @@
 
                         <p class="mb-3">
                             <strong>Why recommended?</strong><br />
-                            <span class="text-success">@Model.Reason</span>
+                            <span class="cs-muted">@Model.Reason</span>
                         </p>
 
-                        <p class="text-muted flex-grow-1" style="min-height: 120px;">
+                        <p class="cs-muted flex-grow-1" style="min-height: 120px;">
                             @(string.IsNullOrWhiteSpace(Model.Movie.Description)
                                 ? "No description available."
                                 : Model.Movie.Description)
@@ -101,21 +104,21 @@
                         <div class="mb-3">
                             @if (Model.UserReaction == true)
                             {
-                                <span class="badge bg-success me-2">Liked</span>
+                                <span class="cs-badge cs-badge-liked me-2">Liked</span>
                             }
                             else if (Model.UserReaction == false)
                             {
-                                <span class="badge bg-danger me-2">Disliked</span>
+                                <span class="cs-badge cs-badge-disliked me-2">Disliked</span>
                             }
 
                             @if (Model.IsInWatchList)
                             {
-                                <span class="badge bg-warning text-dark me-2">In Watchlist</span>
+                                <span class="cs-badge cs-badge-watchlist me-2">In Watchlist</span>
                             }
 
                             @if (Model.IsWatched)
                             {
-                                <span class="badge bg-dark">Watched</span>
+                                <span class="cs-badge cs-badge-watched">Watched</span>
                             }
                         </div>
 
@@ -123,7 +126,7 @@
                             <form asp-action="Like" method="post">
                                 <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
                                 <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                <button type="submit" class="btn btn-success w-100">
+                                <button type="submit" class="btn cs-btn cs-btn-like w-100">
                                     Like
                                 </button>
                             </form>
@@ -131,7 +134,7 @@
                             <form asp-action="Dislike" method="post">
                                 <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
                                 <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                <button type="submit" class="btn btn-danger w-100">
+                                <button type="submit" class="btn cs-btn cs-btn-dislike w-100">
                                     Dislike
                                 </button>
                             </form>
@@ -141,7 +144,7 @@
                                 <form asp-action="AddToWatchList" method="post">
                                     <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
                                     <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                    <button type="submit" class="btn btn-warning text-dark w-100">
+                                    <button type="submit" class="btn cs-btn cs-btn-watchlist w-100">
                                         Add to Watchlist
                                     </button>
                                 </form>
@@ -152,7 +155,7 @@
                                 <form asp-action="MarkWatched" method="post">
                                     <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
                                     <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                    <button type="submit" class="btn btn-dark w-100">
+                                    <button type="submit" class="btn cs-btn cs-btn-watched w-100">
                                         Mark as Watched
                                     </button>
                                 </form>
@@ -162,7 +165,7 @@
                                 <form asp-action="MarkToWatch" method="post">
                                     <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
                                     <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                    <button type="submit" class="btn btn-outline-dark w-100">
+                                    <button type="submit" class="btn cs-btn cs-btn-neutral w-100">
                                         Move Back to To-Watch
                                     </button>
                                 </form>
@@ -171,43 +174,44 @@
                             <a asp-controller="Movie"
                                asp-action="Details"
                                asp-route-id="@Model.Movie.MovieId"
-                               class="btn btn-outline-primary w-100">
+                               class="btn cs-btn cs-btn-blue w-100">
                                 View Details
                             </a>
 
                             <a asp-action="Next"
                                asp-route-currentIndex="@Model.CurrentIndex"
-                               class="btn btn-outline-secondary w-100">
+                               class="btn cs-btn cs-btn-dark w-100">
                                 Next
                             </a>
                         </div>
-                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-8">
-                <div class="card shadow-lg border-0 overflow-hidden h-100">
+            <div class="cs-card p-0 overflow-hidden">
                     @if (!string.IsNullOrEmpty(Model.Movie.PosterPath))
                     {
-                        <img src="@Model.Movie.PosterPath"
-                             alt="@Model.Movie.Title"
-                             class="w-100 h-100"
-                             style="min-height: 760px; object-fit: cover;" />
+                        <div class="cs-image-shell rounded-0">
+                            <img src="@Model.Movie.PosterPath"
+                                 alt="@Model.Movie.Title"
+                                 class="cs-poster cs-poster-lg cs-poster-plain"
+                                 width="1000"
+                                 height="760"
+                                 loading="lazy"
+                                 decoding="async" />
+                        </div>
                     }
                     else
                     {
-                        <div class="d-flex align-items-center justify-content-center bg-light h-100"
-                             style="min-height: 760px;">
+                        <div class="cs-poster-placeholder cs-poster-lg rounded-0 border-0 shadow-none">
                             <div class="text-center">
-                                <div class="display-1 text-muted mb-3">Movie</div>
-                                <h4 class="text-muted">Trailer placeholder area</h4>
-                                <p class="text-muted mb-0">
+                                <div class="display-1 cs-muted mb-3">Movie</div>
+                                <h4 class="cs-muted">Trailer placeholder area</h4>
+                                <p class="cs-muted mb-0">
                                     This section can later be replaced with a trailer or video preview.
                                 </p>
                             </div>
                         </div>
                     }
-                </div>
             </div>
         </div>
     }

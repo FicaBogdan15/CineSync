@@ -1,5 +1,6 @@
 ﻿using CineSync.Data;
 using CineSync.Models;
+using CineSync.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace CineSync.Services
@@ -13,7 +14,12 @@ namespace CineSync.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Movie>> GetMoviesAsync(int? categoryId)
+        public Task<IEnumerable<Movie>> GetMoviesAsync(int? categoryId)
+        {
+            return GetMoviesAsync(categoryId, 1, 0);
+        }
+
+        public async Task<IEnumerable<Movie>> GetMoviesAsync(int? categoryId, int page, int pageSize)
         {
             var query = _context.Movies
                 .Include(m => m.Category)
@@ -23,7 +29,25 @@ namespace CineSync.Services
             if (categoryId.HasValue)
                 query = query.Where(m => m.CategoryId == categoryId.Value);
 
+            query = query.OrderByDescending(m => m.MovieId);
+
+            if (pageSize > 0)
+            {
+                var safePage = Math.Max(page, 1);
+                query = query.Skip((safePage - 1) * pageSize).Take(pageSize);
+            }
+
             return await query.ToListAsync();
+        }
+
+        public async Task<int> GetMoviesCountAsync(int? categoryId)
+        {
+            var query = _context.Movies.AsQueryable();
+
+            if (categoryId.HasValue)
+                query = query.Where(m => m.CategoryId == categoryId.Value);
+
+            return await query.CountAsync();
         }
 
         public async Task<Movie?> GetMovieByIdAsync(int id)
@@ -175,6 +199,99 @@ namespace CineSync.Services
             return results.OrderByDescending(r => r.Score);
         }
 
+        public async Task<IEnumerable<MovieSuggestionViewModel>> GetMovieSuggestionsAsync(string query, int limit = 6)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return Enumerable.Empty<MovieSuggestionViewModel>();
+
+            query = query.Trim().ToLowerInvariant();
+
+            var movies = await _context.Movies
+                .Include(m => m.Category)
+                .Select(m => new
+                {
+                    m.MovieId,
+                    m.Title,
+                    m.Year,
+                    CategoryName = m.Category != null ? m.Category.Name : null
+                })
+                .ToListAsync();
+
+            var suggestions = movies
+                .Select(m => new MovieSuggestionViewModel
+                {
+                    MovieId = m.MovieId,
+                    Title = m.Title,
+                    Year = m.Year,
+                    CategoryName = m.CategoryName,
+                    Score = ComputeSuggestionScore(query, m.Title)
+                })
+                .Where(s => s.Score > 0)
+                .OrderByDescending(s => s.Score)
+                .ThenBy(s => s.Title)
+                .Take(limit)
+                .ToList();
+
+            return suggestions;
+        }
+
+        public async Task<IEnumerable<SimilarMovieViewModel>> GetSimilarMoviesAsync(int movieId, int limit = 4)
+        {
+            var movies = await _context.Movies
+                .Include(m => m.Category)
+                .Include(m => m.Director)
+                .Include(m => m.Casts)!.ThenInclude(c => c.Actor)
+                .ToListAsync();
+
+            var targetMovie = movies.FirstOrDefault(m => m.MovieId == movieId);
+            if (targetMovie == null)
+                return Enumerable.Empty<SimilarMovieViewModel>();
+
+            var documents = movies.Select(m => new
+            {
+                Movie = m,
+                Content = BuildSearchContent(m),
+                Terms = Tokenize(BuildSearchContent(m))
+            }).ToList();
+
+            int totalDocs = documents.Count;
+
+            var allTerms = documents
+                .SelectMany(d => d.Terms)
+                .Distinct()
+                .ToList();
+
+            var allDocTerms = documents.Select(x => x.Terms).ToList();
+
+            var docVectors = documents.Select(d => new
+            {
+                d.Movie,
+                Vector = BuildTfidfVector(d.Terms, allDocTerms, allTerms, totalDocs)
+            }).ToList();
+
+            var targetVector = docVectors.FirstOrDefault(v => v.Movie.MovieId == movieId)?.Vector;
+            if (targetVector == null)
+                return Enumerable.Empty<SimilarMovieViewModel>();
+
+            var similarMovies = docVectors
+                .Where(v => v.Movie.MovieId != movieId)
+                .Select(v => new SimilarMovieViewModel
+                {
+                    MovieId = v.Movie.MovieId,
+                    Title = v.Movie.Title,
+                    PosterPath = v.Movie.PosterPath,
+                    CategoryName = v.Movie.Category?.Name,
+                    Year = v.Movie.Year,
+                    SimilarityScore = ComputeCosineSimilarity(targetVector, v.Vector)
+                })
+                .Where(x => x.SimilarityScore > 0)
+                .OrderByDescending(x => x.SimilarityScore)
+                .Take(limit)
+                .ToList();
+
+            return similarMovies;
+        }
+
         private string BuildSearchContent(Movie m)
         {
             var parts = new List<string> { m.Title };
@@ -213,6 +330,76 @@ namespace CineSync.Services
             int docsWithTerm = allDocs.Count(doc => doc.Contains(term));
             if (docsWithTerm == 0) return 0;
             return Math.Log((double)(totalDocs + 1) / (docsWithTerm + 1)) + 1;
+        }
+
+        private double ComputeSuggestionScore(string query, string title)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                return 0;
+
+            var lowerTitle = title.ToLowerInvariant();
+            double score = 0;
+
+            if (lowerTitle == query)
+                score += 100;
+
+            if (lowerTitle.StartsWith(query))
+                score += 50;
+
+            if (lowerTitle.Contains(query))
+                score += 20;
+
+            var words = lowerTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Any(w => w.StartsWith(query)))
+                score += 10;
+
+            return score;
+        }
+
+        private Dictionary<string, double> BuildTfidfVector(
+            List<string> docTerms,
+            List<List<string>> allDocs,
+            List<string> vocabulary,
+            int totalDocs)
+        {
+            var vector = new Dictionary<string, double>();
+
+            foreach (var term in vocabulary)
+            {
+                double tf = ComputeTF(term, docTerms);
+                double idf = ComputeIDF(term, allDocs, totalDocs);
+                vector[term] = tf * idf;
+            }
+
+            return vector;
+        }
+
+        private double ComputeCosineSimilarity(
+            Dictionary<string, double> vectorA,
+            Dictionary<string, double> vectorB)
+        {
+            double dotProduct = 0;
+            double normA = 0;
+            double normB = 0;
+
+            foreach (var key in vectorA.Keys)
+            {
+                double a = vectorA[key];
+                double b = vectorB.ContainsKey(key) ? vectorB[key] : 0;
+
+                dotProduct += a * b;
+                normA += a * a;
+            }
+
+            foreach (var value in vectorB.Values)
+            {
+                normB += value * value;
+            }
+
+            if (normA == 0 || normB == 0)
+                return 0;
+
+            return dotProduct / (Math.Sqrt(normA) * Math.Sqrt(normB));
         }
 
         public async Task AddCastsAsync(List<Cast> casts)

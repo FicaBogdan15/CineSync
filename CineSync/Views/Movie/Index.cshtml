@@ -4,24 +4,36 @@
     ViewData["Title"] = "Movies";
     var searchResults = ViewBag.SearchResults as List<(CineSync.Models.Movie Movie, double Score)>;
     var averageRatings = ViewBag.AverageRatings as Dictionary<int, double>;
+    int currentPage = ViewBag.CurrentPage != null ? (int)ViewBag.CurrentPage : 1;
+    int totalPages = ViewBag.TotalPages != null ? (int)ViewBag.TotalPages : 1;
+    int totalResults = ViewBag.TotalResults != null ? (int)ViewBag.TotalResults : Model.Count();
 }
 
-<div class="container mt-4">
+<div class="cs-max-1400">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Available Movies</h2>
         @if (User.IsInRole("Admin"))
         {
-            <a asp-action="Manage" class="btn btn-danger">⚙️ Manage Movies</a>
+            <a asp-action="Manage" class="btn cs-btn cs-btn-dislike">Manage Movies</a>
         }
     </div>
 
     <form asp-action="Index" method="get" class="mb-4">
-        <div class="row g-2 align-items-center">
+        <div class="row g-3 align-items-center cs-panel">
             <div class="col-md-6">
                 <div class="input-group">
-                    <span class="input-group-text bg-white">🔍</span>
-                    <input type="text" name="search" value="@ViewBag.Search"
-                           class="form-control" placeholder="Search by title, actor, director..." />
+                    <span class="input-group-text">Search</span>
+                    <div class="position-relative flex-grow-1">
+                        <input type="text"
+                               id="movieSearchInput"
+                               name="search"
+                               value="@ViewBag.Search"
+                               class="form-control"
+                               placeholder="Search by title, actor, director..."
+                               autocomplete="off" />
+
+                        <div id="movieSuggestionsBox" class="cs-suggestions-box d-none"></div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -37,31 +49,29 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Search</button>
+                <button type="submit" class="btn cs-btn cs-btn-blue w-100">Search</button>
             </div>
         </div>
 
         @if (!string.IsNullOrEmpty(ViewBag.Search as string))
         {
             <div class="mt-2">
-                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">✕ Clear search</a>
-                <span class="text-muted ms-2 small">
+                <a asp-action="Index" class="btn cs-btn cs-btn-neutral">Clear search</a>
+                <span class="cs-muted ms-2 small">
                     Showing results for "<strong>@ViewBag.Search</strong>"
-                    — @Model.Count() result(s) found
+                    — @totalResults result(s) found
                 </span>
             </div>
         }
     </form>
 
-    <div class="row">
-        @if (!Model.Any())
-        {
-            <div class="col-12">
-                <div class="alert alert-info">No movies found.</div>
-            </div>
-        }
-        else
-        {
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No movies found.</div>
+    }
+    else
+    {
+        <div class="cs-grid-movies">
             @foreach (var movie in Model)
             {
                 double? score = searchResults?.FirstOrDefault(r => r.Movie.MovieId == movie.MovieId).Score;
@@ -69,63 +79,92 @@
                 ? averageRatings[movie.MovieId]
                 : 0.0;
 
-                <div class="col-md-3 mb-4">
-                    <div class="card h-100 shadow-sm border-0">
-
+                <div>
+                    <div class="cs-card movie-card p-0 overflow-hidden h-100">
                         <div class="position-relative">
                             @if (!string.IsNullOrEmpty(movie.PosterPath))
                             {
-                                <img src="@movie.PosterPath" class="card-img-top"
-                                     style="height:300px; object-fit:cover" alt="@movie.Title" />
+                                <div class="cs-image-shell">
+                                    <img src="@movie.PosterPath"
+                                         class="cs-poster cs-poster-sm cs-poster-plain"
+                                         alt="@movie.Title"
+                                         width="400"
+                                         height="320"
+                                         loading="lazy"
+                                         decoding="async" />
+                                </div>
                             }
                             else
                             {
-                                <div class="bg-light d-flex align-items-center justify-content-center"
-                                     style="height:300px">
-                                    <span class="text-muted fs-1">🎬</span>
+                                <div class="cs-poster-placeholder cs-poster-sm rounded-0 border-0 shadow-none">
+                                    <span class="fs-1">Movie</span>
                                 </div>
                             }
 
                             @if (avgRating > 0)
                             {
-                                <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2 shadow">
-                                    ⭐ @avgRating.ToString("F1")
+                                <span class="cs-badge cs-badge-rating position-absolute top-0 end-0 m-3">
+                                    @avgRating.ToString("F1")
                                 </span>
                             }
                         </div>
 
-                        <div class="card-body">
+                        <div class="p-4 d-flex flex-column">
                             <h5 class="card-title text-truncate">@movie.Title</h5>
 
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-info text-dark">@movie.Category?.Name</span>
-                                <small class="text-muted">@movie.Year</small>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="cs-badge cs-badge-category">@movie.Category?.Name</span>
+                                <span class="cs-badge cs-badge-meta">@movie.Year</span>
                             </div>
 
                             @if (score.HasValue)
                             {
-                                <div class="mt-1 mb-1">
-                                    <span class="badge bg-success bg-opacity-75 small">
-                                        relevance: @score.Value.ToString("F3")
+                                <div class="mt-1 mb-2">
+                                    <span class="cs-badge cs-badge-watched">
+                                        Relevance @score.Value.ToString("F3")
                                     </span>
                                 </div>
                             }
 
-                            <p class="card-text text-muted small mt-2"
-                               style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+                            <p class="cs-muted small mt-2 mb-4 cs-line-clamp-2">
                                 @movie.Description
                             </p>
                         </div>
 
-                        <div class="card-footer bg-white border-top-0 pb-3">
+                        <div class="p-4 pt-0">
                             <a asp-action="Details" asp-route-id="@movie.MovieId"
-                               class="btn btn-primary w-100 shadow-sm">
+                               class="btn cs-btn cs-btn-blue w-100">
                                 View Details
                             </a>
                         </div>
                     </div>
                 </div>
             }
+        </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
+                <a asp-action="Index"
+                   asp-route-categoryId="@ViewBag.SelectedCategory"
+                   asp-route-search="@ViewBag.Search"
+                   asp-route-page="@(currentPage - 1)"
+                   class="btn cs-btn cs-btn-neutral @(currentPage <= 1 ? "disabled" : "")">
+                    Previous
+                </a>
+
+                <span class="cs-badge cs-badge-meta">
+                    Page @currentPage / @totalPages
+                </span>
+
+                <a asp-action="Index"
+                   asp-route-categoryId="@ViewBag.SelectedCategory"
+                   asp-route-search="@ViewBag.Search"
+                   asp-route-page="@(currentPage + 1)"
+                   class="btn cs-btn cs-btn-neutral @(currentPage >= totalPages ? "disabled" : "")">
+                    Next
+                </a>
+            </div>
         }
-    </div>
+    }
 </div>

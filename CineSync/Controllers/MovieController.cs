@@ -1,5 +1,6 @@
 ﻿using CineSync.Models;
 using CineSync.Services;
+using CineSync.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -22,13 +23,19 @@ namespace CineSync.Controllers
             _recommendationService = recommendationService;
         }
 
-        public async Task<IActionResult> Index(int? categoryId, string? search)
+        public async Task<IActionResult> Index(int? categoryId, string? search, int page = 1)
         {
+            const int pageSize = 9;
+            page = Math.Max(page, 1);
+
             ViewBag.Categories = await _movieService.GetAllCategoriesAsync();
             ViewBag.SelectedCategory = categoryId;
             ViewBag.Search = search;
+            ViewBag.PageSize = pageSize;
 
             IEnumerable<Movie> movies;
+            int totalResults;
+            int totalPages;
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -36,13 +43,32 @@ namespace CineSync.Controllers
                 if (categoryId.HasValue)
                     results = results.Where(r => r.Movie.CategoryId == categoryId.Value);
 
-                ViewBag.SearchResults = results.ToList();
-                movies = results.Select(r => r.Movie).ToList();
+                var filteredResults = results.ToList();
+                ViewBag.SearchResults = filteredResults;
+                totalResults = filteredResults.Count;
+                totalPages = Math.Max(1, (int)Math.Ceiling(totalResults / (double)pageSize));
+                if (page > totalPages)
+                    page = totalPages;
+
+                movies = filteredResults
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(r => r.Movie)
+                    .ToList();
             }
             else
             {
-                movies = await _movieService.GetMoviesAsync(categoryId);
+                totalResults = await _movieService.GetMoviesCountAsync(categoryId);
+                totalPages = Math.Max(1, (int)Math.Ceiling(totalResults / (double)pageSize));
+                if (page > totalPages)
+                    page = totalPages;
+
+                movies = await _movieService.GetMoviesAsync(categoryId, page, pageSize);
             }
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalResults = totalResults;
 
             ViewBag.AverageRatings = movies.ToDictionary(
                 m => m.MovieId,
@@ -52,6 +78,24 @@ namespace CineSync.Controllers
             );
 
             return View(movies);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Suggestions(string term)
+        {
+            if (string.IsNullOrWhiteSpace(term))
+                return Json(new List<MovieSuggestionViewModel>());
+
+            var suggestions = await _movieService.GetMovieSuggestionsAsync(term, 6);
+
+            return Json(suggestions.Select(s => new
+            {
+                movieId = s.MovieId,
+                title = s.Title,
+                year = s.Year,
+                categoryName = s.CategoryName,
+                score = s.Score
+            }));
         }
 
         public async Task<IActionResult> Details(int id)
@@ -64,6 +108,7 @@ namespace CineSync.Controllers
                 : (double?)null;
 
             ViewBag.ReviewCount = movie.Reviews?.Count ?? 0;
+            ViewBag.SimilarMovies = await _movieService.GetSimilarMoviesAsync(id, 4);
 
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {

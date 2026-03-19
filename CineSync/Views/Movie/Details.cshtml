@@ -1,4 +1,5 @@
-﻿@model CineSync.Models.Movie
+﻿@using CineSync.ViewModels
+@model CineSync.Models.Movie
 
 @{
     ViewData["Title"] = Model.Title;
@@ -8,59 +9,66 @@
     bool isInWatchList = ViewBag.IsInWatchList != null && (bool)ViewBag.IsInWatchList;
     bool isWatched = ViewBag.IsWatched != null && (bool)ViewBag.IsWatched;
     bool? userReaction = ViewBag.UserReaction as bool?;
+    var similarMovies = ViewBag.SimilarMovies as IEnumerable<SimilarMovieViewModel>;
 }
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-4 mb-4">
+<div class="cs-max-1400">
+    <div class="cs-details-layout">
+        <div>
             @if (!string.IsNullOrEmpty(Model.PosterPath))
             {
-                <img src="@Model.PosterPath" class="img-fluid rounded shadow"
-                     alt="@Model.Title" style="max-height:500px;width:100%;object-fit:cover" />
+                <div class="cs-image-shell">
+                    <img src="@Model.PosterPath"
+                         class="cs-poster cs-poster-md cs-poster-plain"
+                         alt="@Model.Title"
+                         width="560"
+                         height="420"
+                         loading="lazy"
+                         decoding="async" />
+                </div>
             }
             else
             {
-                <div class="bg-light rounded d-flex align-items-center justify-content-center shadow"
-                     style="height:400px">
-                    <span class="text-muted fs-1">🎬</span>
+                <div class="cs-poster-placeholder cs-poster-md">
+                    <span class="fs-1">Movie</span>
                 </div>
             }
 
             @if (!string.IsNullOrEmpty(Model.PdfPath))
             {
                 <a href="@Model.PdfPath" target="_blank"
-                   class="btn btn-outline-danger w-100 mt-3 shadow-sm">
-                    📄 View Movie Sheet (PDF)
+                   class="btn cs-btn cs-btn-dislike w-100 mt-3">
+                    View Movie Sheet
                 </a>
             }
         </div>
 
-        <div class="col-md-8">
+        <div class="cs-panel">
             <div class="d-flex justify-content-between align-items-start">
-                <h1 class="fw-bold">@Model.Title</h1>
+                <h1 class="mb-0">@Model.Title</h1>
                 @if (User.IsInRole("Admin"))
                 {
                     <a asp-action="Edit" asp-route-id="@Model.MovieId"
-                       class="btn btn-warning btn-sm">✏️ Edit</a>
+                       class="btn cs-btn cs-btn-watchlist">Edit</a>
                 }
             </div>
 
             <div class="d-flex gap-2 flex-wrap mb-3">
-                <span class="badge bg-info text-dark fs-6">@Model.Category?.Name</span>
-                <span class="badge bg-secondary fs-6">@Model.Year</span>
+                <span class="cs-badge cs-badge-category">@Model.Category?.Name</span>
+                <span class="cs-badge cs-badge-meta">@Model.Year</span>
 
                 @if (averageRating.HasValue)
                 {
-                    <span class="badge bg-warning text-dark fs-6">
-                        ⭐ @averageRating.Value.ToString("F1") / 10
+                    <span class="cs-badge cs-badge-rating">
+                        Rating @averageRating.Value.ToString("F1") / 10
                     </span>
-                    <span class="badge bg-dark fs-6">
+                    <span class="cs-badge cs-badge-dark">
                         @reviewCount review(s)
                     </span>
                 }
                 else
                 {
-                    <span class="badge bg-light text-dark border fs-6">
+                    <span class="cs-badge cs-badge-meta">
                         No ratings yet
                     </span>
                 }
@@ -69,15 +77,15 @@
             @if (Model.Director != null)
             {
                 <p class="mb-2">
-                    <strong>🎬 Director:</strong> @Model.Director.Name
-                    <span class="text-muted small ms-2">(@Model.Director.AwardsCount awards)</span>
+                    <strong>Director:</strong> @Model.Director.Name
+                    <span class="cs-muted small ms-2">(@Model.Director.AwardsCount awards)</span>
                 </p>
             }
 
-            <hr />
+            <div class="cs-divider"></div>
 
             <h5>Description</h5>
-            <p class="text-muted">@(Model.Description ?? "No description available.")</p>
+            <p class="cs-muted">@(Model.Description ?? "No description available.")</p>
 
             @if (User.Identity != null && User.Identity.IsAuthenticated)
             {
@@ -87,85 +95,81 @@
                     <div class="d-flex flex-wrap gap-2 mb-3">
                         @if (userReaction == true)
                         {
-                            <span class="badge bg-success">Liked</span>
+                            <span class="cs-badge cs-badge-liked">Liked</span>
                         }
                         else if (userReaction == false)
                         {
-                            <span class="badge bg-danger">Disliked</span>
+                            <span class="cs-badge cs-badge-disliked">Disliked</span>
                         }
                         else
                         {
-                            <span class="badge bg-light text-dark border">No reaction yet</span>
+                            <span class="cs-badge cs-badge-meta">No reaction yet</span>
                         }
                     </div>
 
-                    <div class="d-grid gap-2 d-md-block mb-4">
+                    <div class="d-flex flex-wrap gap-2 mb-4">
                         <form asp-action="Like" method="post" class="d-inline">
                             <input type="hidden" name="movieId" value="@Model.MovieId" />
-                            <button type="submit" class="btn btn-success me-2 mb-2">
+                            <button type="submit" class="btn cs-btn cs-btn-like">
                                 Like
                             </button>
                         </form>
 
                         <form asp-action="Dislike" method="post" class="d-inline">
                             <input type="hidden" name="movieId" value="@Model.MovieId" />
-                            <button type="submit" class="btn btn-danger mb-2">
+                            <button type="submit" class="btn cs-btn cs-btn-dislike">
                                 Dislike
                             </button>
                         </form>
-                    </div>
 
-                    <h5 class="mb-3">Watchlist</h5>
-
-                    <div class="d-flex flex-wrap gap-2 mb-3">
                         @if (isInWatchList)
-                        {
-                            <span class="badge bg-warning text-dark">In Watchlist</span>
-                        }
-
-                        @if (isWatched)
-                        {
-                            <span class="badge bg-dark">Watched</span>
-                        }
-                    </div>
-
-                    <div class="d-grid gap-2 d-md-block">
-                        @if (!isInWatchList)
-                        {
-                            <form asp-controller="Recommendation" asp-action="AddToWatchList" method="post" class="d-inline">
-                                <input type="hidden" name="movieId" value="@Model.MovieId" />
-                                <button type="submit" class="btn btn-warning text-dark me-2 mb-2">
-                                    Add to Watchlist
-                                </button>
-                            </form>
-                        }
-                        else
                         {
                             <form asp-controller="WatchList" asp-action="Remove" method="post" class="d-inline">
                                 <input type="hidden" name="movieId" value="@Model.MovieId" />
-                                <button type="submit" class="btn btn-outline-danger me-2 mb-2">
+                                <button type="submit" class="btn cs-btn cs-btn-dislike">
                                     Remove from Watchlist
                                 </button>
                             </form>
                         }
-
-                        @if (!isWatched)
+                        else
                         {
-                            <form asp-controller="WatchList" asp-action="MarkWatched" method="post" class="d-inline">
+                            <form asp-controller="Recommendation" asp-action="AddToWatchList" method="post" class="d-inline">
                                 <input type="hidden" name="movieId" value="@Model.MovieId" />
-                                <button type="submit" class="btn btn-dark mb-2">
-                                    Mark as Watched
+                                <button type="submit" class="btn cs-btn cs-btn-watchlist">
+                                    Add to Watchlist
+                                </button>
+                            </form>
+                        }
+
+                        @if (isWatched)
+                        {
+                            <form asp-controller="WatchList" asp-action="MarkToWatch" method="post" class="d-inline">
+                                <input type="hidden" name="movieId" value="@Model.MovieId" />
+                                <button type="submit" class="btn cs-btn cs-btn-neutral">
+                                    Move Back to To Watch
                                 </button>
                             </form>
                         }
                         else
                         {
-                            <form asp-controller="WatchList" asp-action="MarkToWatch" method="post" class="d-inline">
+                            <form asp-controller="WatchList" asp-action="MarkWatched" method="post" class="d-inline">
                                 <input type="hidden" name="movieId" value="@Model.MovieId" />
-                                <button type="submit" class="btn btn-outline-dark mb-2">
-                                    Move Back to To Watch
+                                <button type="submit" class="btn cs-btn cs-btn-watched">
+                                    Mark as Watched
                                 </button>
                             </form>
+                        }
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        @if (isInWatchList)
+                        {
+                            <span class="cs-badge cs-badge-watchlist">In Watchlist</span>
+                        }
+
+                        @if (isWatched)
+                        {
+                            <span class="cs-badge cs-badge-watched">Watched</span>
                         }
                     </div>
                 </div>
@@ -173,17 +177,17 @@
 
             @if (Model.Casts != null && Model.Casts.Any())
             {
-                <hr />
+                <div class="cs-divider"></div>
                 <h5>Cast</h5>
                 <div class="row g-2 mt-1">
                     @foreach (var cast in Model.Casts)
                     {
                         <div class="col-md-4">
-                            <div class="card border-0 bg-light p-2 rounded shadow-sm">
+                            <div class="cs-card p-3 h-100">
                                 <div class="fw-semibold">@cast.Actor?.Name</div>
-                                <small class="text-muted">
+                                <small class="cs-muted">
                                     as <em>@cast.CharacterName</em>
-                                    <span class="badge @(cast.RoleType == "Lead" ? "bg-warning text-dark" : "bg-secondary") ms-1">
+                                    <span class="cs-badge @(cast.RoleType == "Lead" ? "cs-badge-rating" : "cs-badge-meta") ms-1">
                                         @cast.RoleType
                                     </span>
                                 </small>
@@ -195,7 +199,7 @@
         </div>
     </div>
 
-    <hr class="my-4" />
+    <div class="cs-divider"></div>
 
     <div class="row">
         <div class="col-lg-7">
@@ -216,21 +220,19 @@
                 <div class="mt-3">
                     @foreach (var review in Model.Reviews.OrderByDescending(r => r.Date))
                     {
-                        <div class="card mb-3 shadow-sm border-0 bg-light">
-                            <div class="card-body">
+                        <div class="cs-card p-3 mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <strong>@(review.User?.UserName ?? "Anonymous")</strong>
-                                    <span class="badge bg-warning text-dark">
-                                        ⭐ @review.Rating / 10
+                                    <span class="cs-badge cs-badge-rating">
+                                        Rating @review.Rating / 10
                                     </span>
                                 </div>
 
                                 <p class="mb-2">@review.ReviewText</p>
 
-                                <small class="text-muted">
+                                <small class="cs-muted">
                                     @review.Date.ToString("dd MMM yyyy, HH:mm")
                                 </small>
-                            </div>
                         </div>
                     }
                 </div>
@@ -280,7 +282,7 @@
                               placeholder="Write your opinion about this movie..." required></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">
+                    <button type="submit" class="btn cs-btn cs-btn-blue w-100">
                         Submit Review
                     </button>
                 </form>
@@ -288,7 +290,60 @@
         </div>
     </div>
 
+    @if (similarMovies != null && similarMovies.Any())
+    {
+        <hr class="my-4" />
+
+        <div class="mt-4">
+            <h4>Similar Movies</h4>
+            <div class="row g-4 mt-1">
+                @foreach (var similar in similarMovies)
+                {
+                    <div class="col-md-3">
+                        <div class="cs-card p-0 overflow-hidden h-100">
+                            @if (!string.IsNullOrEmpty(similar.PosterPath))
+                            {
+                                <img src="@similar.PosterPath"
+                                     alt="@similar.Title"
+                                     class="cs-poster cs-poster-sm cs-poster-plain"
+                                     loading="lazy"
+                                     decoding="async" />
+                            }
+                            else
+                            {
+                                <div class="cs-poster-placeholder cs-poster-sm rounded-0 border-0 shadow-none">
+                                    <span class="fs-3">Movie</span>
+                                </div>
+                            }
+
+                            <div class="p-3 d-flex flex-column">
+                                <h6 class="fw-bold mb-2">@similar.Title</h6>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="cs-badge cs-badge-category">@similar.CategoryName</span>
+                                    <span class="cs-badge cs-badge-meta">@similar.Year</span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <span class="cs-badge cs-badge-rating">
+                                        Similarity @similar.SimilarityScore.ToString("F2")
+                                    </span>
+                                </div>
+
+                                <a asp-action="Details"
+                                   asp-route-id="@similar.MovieId"
+                                   class="btn cs-btn cs-btn-blue w-100 mt-auto">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
     <div class="mt-4">
-        <a asp-action="Index" class="btn btn-outline-secondary">← Back to Movies</a>
+        <a asp-action="Index" class="btn cs-btn cs-btn-neutral">Back to Movies</a>
     </div>
 </div>

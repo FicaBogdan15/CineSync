@@ -7,13 +7,13 @@
     var watched = Model.Where(i => i.IsWatched).ToList();
 }
 
-<div class="container mt-4">
+<div class="cs-max-1400">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1">My Watchlist</h2>
-            <p class="text-muted mb-0">Keep track of movies you want to watch and those you have already seen.</p>
+            <h2 class="mb-1">My Watchlist</h2>
+            <p class="cs-muted mb-0">Keep track of movies you want to watch and those you have already seen.</p>
         </div>
-        <a asp-controller="Recommendation" asp-action="Index" class="btn btn-outline-primary">
+        <a asp-controller="Recommendation" asp-action="Index" class="btn cs-btn cs-btn-neutral">
             Back to Recommendations
         </a>
     </div>
@@ -29,7 +29,7 @@
             Your watchlist is empty.
         </div>
 
-        <a asp-controller="Recommendation" asp-action="Index" class="btn btn-primary">
+        <a asp-controller="Recommendation" asp-action="Index" class="btn cs-btn cs-btn-blue">
             Discover Recommendations
         </a>
     }
@@ -46,38 +46,42 @@
             }
             else
             {
-                <div class="row g-4">
+                <div class="cs-grid-movies">
                     @foreach (var item in toWatch)
                     {
-                        <div class="col-md-6 col-xl-4">
-                            <div class="card shadow-sm border-0 h-100">
+                        <div>
+                            <div class="cs-card movie-card p-0 overflow-hidden h-100">
                                 @if (!string.IsNullOrEmpty(item.Movie?.PosterPath))
                                 {
-                                    <img src="@item.Movie.PosterPath"
-                                         class="card-img-top"
-                                         alt="@item.Movie?.Title"
-                                         style="height: 320px; object-fit: cover;" />
+                                    <div class="cs-image-shell">
+                                        <img src="@item.Movie.PosterPath"
+                                             class="cs-poster cs-poster-sm cs-poster-plain"
+                                             alt="@item.Movie?.Title"
+                                             width="400"
+                                             height="320"
+                                             loading="lazy"
+                                             decoding="async" />
+                                    </div>
                                 }
                                 else
                                 {
-                                    <div class="d-flex align-items-center justify-content-center bg-light"
-                                         style="height: 320px;">
-                                        <span class="display-4 text-muted">Movie</span>
+                                    <div class="cs-poster-placeholder cs-poster-sm rounded-0 border-0 shadow-none">
+                                        <span class="display-4">Movie</span>
                                     </div>
                                 }
 
-                                <div class="card-body d-flex flex-column">
+                                <div class="p-4 d-flex flex-column h-100">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h5 class="card-title fw-bold mb-0">@item.Movie?.Title</h5>
-                                        <span class="badge bg-warning text-dark">To Watch</span>
+                                        <h5 class="card-title mb-0">@item.Movie?.Title</h5>
+                                        <span class="cs-badge cs-badge-watchlist">To Watch</span>
                                     </div>
 
                                     <div class="mb-2">
-                                        <span class="badge bg-info text-dark me-1">@item.Movie?.Category?.Name</span>
-                                        <span class="badge bg-secondary">@item.Movie?.Year</span>
+                                        <span class="cs-badge cs-badge-category me-1">@item.Movie?.Category?.Name</span>
+                                        <span class="cs-badge cs-badge-meta">@item.Movie?.Year</span>
                                     </div>
 
-                                    <p class="text-muted small mb-3">
+                                    <p class="cs-muted small mb-3 cs-line-clamp-4">
                                         @(string.IsNullOrWhiteSpace(item.Movie?.Description)
                                             ? "No description available."
                                             : item.Movie.Description.Length > 120
@@ -88,7 +92,7 @@
                                     <div class="mt-auto d-grid gap-2">
                                         <form asp-action="MarkWatched" method="post">
                                             <input type="hidden" name="movieId" value="@item.MovieId" />
-                                            <button type="submit" class="btn btn-dark w-100">
+                                            <button type="submit" class="btn cs-btn cs-btn-watched w-100">
                                                 Mark as Watched
                                             </button>
                                         </form>
@@ -96,20 +100,20 @@
                                         <a asp-controller="Movie"
                                            asp-action="Details"
                                            asp-route-id="@item.MovieId"
-                                           class="btn btn-outline-primary w-100">
+                                           class="btn cs-btn cs-btn-blue w-100">
                                             View Details
                                         </a>
 
                                         <form asp-action="Remove" method="post">
                                             <input type="hidden" name="movieId" value="@item.MovieId" />
-                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                            <button type="submit" class="btn cs-btn cs-btn-dislike w-100">
                                                 Remove from Watchlist
                                             </button>
                                         </form>
                                     </div>
                                 </div>
 
-                                <div class="card-footer bg-white text-muted small">
+                                <div class="p-4 pt-0 cs-muted small">
                                     Added on @item.AddedAt.ToString("dd MMM yyyy")
                                 </div>
                             </div>
@@ -130,38 +134,42 @@
             }
             else
             {
-                <div class="row g-4">
+                <div class="cs-grid-movies">
                     @foreach (var item in watched)
                     {
-                        <div class="col-md-6 col-xl-4">
-                            <div class="card shadow-sm border-0 h-100">
+                        <div>
+                            <div class="cs-card movie-card p-0 overflow-hidden h-100">
                                 @if (!string.IsNullOrEmpty(item.Movie?.PosterPath))
                                 {
-                                    <img src="@item.Movie.PosterPath"
-                                         class="card-img-top"
-                                         alt="@item.Movie?.Title"
-                                         style="height: 320px; object-fit: cover;" />
+                                    <div class="cs-image-shell">
+                                        <img src="@item.Movie.PosterPath"
+                                             class="cs-poster cs-poster-sm cs-poster-plain"
+                                             alt="@item.Movie?.Title"
+                                             width="400"
+                                             height="320"
+                                             loading="lazy"
+                                             decoding="async" />
+                                    </div>
                                 }
                                 else
                                 {
-                                    <div class="d-flex align-items-center justify-content-center bg-light"
-                                         style="height: 320px;">
-                                        <span class="display-4 text-muted">Movie</span>
+                                    <div class="cs-poster-placeholder cs-poster-sm rounded-0 border-0 shadow-none">
+                                        <span class="display-4">Movie</span>
                                     </div>
                                 }
 
-                                <div class="card-body d-flex flex-column">
+                                <div class="p-4 d-flex flex-column h-100">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h5 class="card-title fw-bold mb-0">@item.Movie?.Title</h5>
-                                        <span class="badge bg-dark">Watched</span>
+                                        <h5 class="card-title mb-0">@item.Movie?.Title</h5>
+                                        <span class="cs-badge cs-badge-watched">Watched</span>
                                     </div>
 
                                     <div class="mb-2">
-                                        <span class="badge bg-info text-dark me-1">@item.Movie?.Category?.Name</span>
-                                        <span class="badge bg-secondary">@item.Movie?.Year</span>
+                                        <span class="cs-badge cs-badge-category me-1">@item.Movie?.Category?.Name</span>
+                                        <span class="cs-badge cs-badge-meta">@item.Movie?.Year</span>
                                     </div>
 
-                                    <p class="text-muted small mb-3">
+                                    <p class="cs-muted small mb-3 cs-line-clamp-4">
                                         @(string.IsNullOrWhiteSpace(item.Movie?.Description)
                                             ? "No description available."
                                             : item.Movie.Description.Length > 120
@@ -172,7 +180,7 @@
                                     <div class="mt-auto d-grid gap-2">
                                         <form asp-action="MarkToWatch" method="post">
                                             <input type="hidden" name="movieId" value="@item.MovieId" />
-                                            <button type="submit" class="btn btn-outline-dark w-100">
+                                            <button type="submit" class="btn cs-btn cs-btn-neutral w-100">
                                                 Move Back to To Watch
                                             </button>
                                         </form>
@@ -180,20 +188,20 @@
                                         <a asp-controller="Movie"
                                            asp-action="Details"
                                            asp-route-id="@item.MovieId"
-                                           class="btn btn-outline-primary w-100">
+                                           class="btn cs-btn cs-btn-blue w-100">
                                             View Details
                                         </a>
 
                                         <form asp-action="Remove" method="post">
                                             <input type="hidden" name="movieId" value="@item.MovieId" />
-                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                            <button type="submit" class="btn cs-btn cs-btn-dislike w-100">
                                                 Remove from Watchlist
                                             </button>
                                         </form>
                                     </div>
                                 </div>
 
-                                <div class="card-footer bg-white text-muted small">
+                                <div class="p-4 pt-0 cs-muted small">
                                     Watched on @(item.WatchedAt?.ToString("dd MMM yyyy") ?? "-")
                                 </div>
                             </div>
