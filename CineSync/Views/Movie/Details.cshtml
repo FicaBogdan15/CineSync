@@ -1,6 +1,5 @@
-﻿@using CineSync.ViewModels
+@using CineSync.ViewModels
 @model CineSync.Models.Movie
-
 @{
     ViewData["Title"] = Model.Title;
     double? averageRating = ViewBag.AverageRating as double?;
@@ -12,330 +11,376 @@
     var similarMovies = ViewBag.SimilarMovies as IEnumerable<SimilarMovieViewModel>;
 }
 
-<div class="cs-max-1400">
-    <div class="cs-details-layout">
-        <div>
+<div class="cs-page">
+
+    <!-- ── HERO SECTION ── -->
+    <div class="det-hero">
+
+        <!-- LEFT: Poster -->
+        <div class="det-poster-col">
             @if (!string.IsNullOrEmpty(Model.PosterPath))
             {
-                <div class="cs-image-shell">
+                <div style="position:relative;">
+                    @if (averageRating.HasValue)
+                    {
+                        <div style="position:absolute;top:16px;left:16px;background:var(--cs-yellow);color:#000;border:3px solid #111;border-radius:8px;box-shadow:4px 4px 0 #111;padding:6px 14px;font-family:'Archivo Black',sans-serif;font-size:0.9rem;text-transform:uppercase;letter-spacing:0.04em;z-index:2;">
+                            @averageRating.Value.ToString("F1")/10
+                        </div>
+                    }
                     <img src="@Model.PosterPath"
-                         class="cs-poster cs-poster-md cs-poster-plain"
                          alt="@Model.Title"
-                         width="560"
-                         height="420"
-                         loading="lazy"
-                         decoding="async" />
+                         loading="lazy" decoding="async"
+                         width="560" height="420"
+                         style="width:100%;aspect-ratio:2/3;object-fit:cover;border:3px solid #111;border-radius:14px;box-shadow:8px 8px 0 #111;display:block;" />
                 </div>
             }
             else
             {
-                <div class="cs-poster-placeholder cs-poster-md">
-                    <span class="fs-1">Movie</span>
+                <div style="width:100%;aspect-ratio:2/3;background:var(--cs-surface-2);border:3px solid #111;border-radius:14px;box-shadow:8px 8px 0 #111;display:flex;align-items:center;justify-content:center;font-size:3rem;">
+                    🎬
                 </div>
             }
 
+            <!-- PDF Button -->
             @if (!string.IsNullOrEmpty(Model.PdfPath))
             {
                 <a href="@Model.PdfPath" target="_blank"
-                   class="btn cs-btn cs-btn-dislike w-100 mt-3">
-                    View Movie Sheet
+                   style="display:block;margin-top:16px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;background:#ff5c5c;color:#fff;border:3px solid #111;border-radius:8px;padding:14px;box-shadow:4px 4px 0 #111;text-decoration:none;transition:transform 0.12s,box-shadow 0.12s;"
+                   onmouseover="this.style.transform='translate(-2px,-2px)';this.style.boxShadow='6px 6px 0 #111'"
+                   onmouseout="this.style.transform='';this.style.boxShadow='4px 4px 0 #111'">
+                    📄 View Movie Sheet (PDF)
                 </a>
             }
         </div>
 
-        <div class="cs-panel">
-            <div class="d-flex justify-content-between align-items-start">
-                <h1 class="mb-0">@Model.Title</h1>
-                @if (User.IsInRole("Admin"))
+        <!-- RIGHT: Info -->
+        <div class="det-info-col">
+
+            <!-- Category + Year -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;background:var(--cs-blue);color:#000;border:2px solid #111;border-radius:999px;padding:5px 14px;box-shadow:2px 2px 0 #111;">
+                    @(Model.Category?.Name ?? "—")
+                </span>
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.88rem;color:var(--cs-muted);letter-spacing:0.04em;">
+                    @Model.Year
+                </span>
+                @if (averageRating.HasValue)
                 {
-                    <a asp-action="Edit" asp-route-id="@Model.MovieId"
-                       class="btn cs-btn cs-btn-watchlist">Edit</a>
+                    <span style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;background:var(--cs-yellow);color:#000;border:2px solid #111;border-radius:999px;padding:5px 14px;box-shadow:2px 2px 0 #111;">
+                        ★ @averageRating.Value.ToString("F1") / 10
+                    </span>
+                    <span style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-surface-2);color:var(--cs-text);border:2px solid #111;border-radius:999px;padding:5px 14px;box-shadow:2px 2px 0 #111;">
+                        @reviewCount review@(reviewCount != 1 ? "s" : "")
+                    </span>
                 }
             </div>
 
-            <div class="d-flex gap-2 flex-wrap mb-3">
-                <span class="cs-badge cs-badge-category">@Model.Category?.Name</span>
-                <span class="cs-badge cs-badge-meta">@Model.Year</span>
+            <!-- Title -->
+            <h1 style="font-family:'Archivo Black',sans-serif;font-size:clamp(2.4rem,5vw,4rem);text-transform:uppercase;letter-spacing:-0.04em;line-height:0.95;color:var(--cs-text);margin-bottom:28px;">
+                @Model.Title
+            </h1>
 
-                @if (averageRating.HasValue)
+            <!-- Director -->
+            @if (Model.Director != null)
+            {
+                <div style="margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+                    <span style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cs-muted);">Director</span>
+                    <span style="font-family:'Archivo Black',sans-serif;font-size:0.9rem;color:var(--cs-text);">@Model.Director.Name</span>
+                    @if (Model.Director.AwardsCount > 0)
+                    {
+                        <span style="font-size:0.78rem;color:var(--cs-muted);">(@Model.Director.AwardsCount awards)</span>
+                    }
+                </div>
+            }
+
+            <!-- Action Buttons -->
+            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:28px;">
+                @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <span class="cs-badge cs-badge-rating">
-                        Rating @averageRating.Value.ToString("F1") / 10
-                    </span>
-                    <span class="cs-badge cs-badge-dark">
-                        @reviewCount review(s)
-                    </span>
+                    @if (isInWatchList)
+                    {
+                        <form asp-controller="WatchList" asp-action="Remove" method="post">
+                            <input type="hidden" name="movieId" value="@Model.MovieId" />
+                            <button type="submit" class="det-btn det-btn-yellow">
+                                ✓ In Watchlist
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-controller="Recommendation" asp-action="AddToWatchList" method="post">
+                            <input type="hidden" name="movieId" value="@Model.MovieId" />
+                            <button type="submit" class="det-btn det-btn-yellow">
+                                + Add to Watchlist
+                            </button>
+                        </form>
+                    }
+
+                    @if (isWatched)
+                    {
+                        <form asp-controller="WatchList" asp-action="MarkToWatch" method="post">
+                            <input type="hidden" name="movieId" value="@Model.MovieId" />
+                            <button type="submit" class="det-btn det-btn-pink">
+                                ↩ Move to To Watch
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-controller="WatchList" asp-action="MarkWatched" method="post">
+                            <input type="hidden" name="movieId" value="@Model.MovieId" />
+                            <button type="submit" class="det-btn det-btn-lime">
+                                ✓ Mark as Watched
+                            </button>
+                        </form>
+                    }
+                }
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.MovieId" class="det-btn det-btn-outline">
+                        ✏ Edit
+                    </a>
+                }
+            </div>
+
+            <!-- Reaction Buttons -->
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div style="margin-bottom:24px;">
+                    <div style="font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cs-muted);margin-bottom:10px;">Your Reaction</div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                        <form asp-action="Like" method="post">
+                            <input type="hidden" name="movieId" value="@Model.MovieId" />
+                            <button type="submit"
+                                    style="font-family:'Archivo Black',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;background:@(userReaction == true ? "#ff90e8" : "var(--cs-surface)");color:@(userReaction == true ? "#000" : "var(--cs-text)");border:3px solid #111;border-radius:8px;padding:10px 20px;box-shadow:3px 3px 0 #111;cursor:pointer;transition:transform 0.12s;">
+                                👍 Like @(userReaction == true ? "✓" : "")
+                            </button>
+                        </form>
+                        <form asp-action="Dislike" method="post">
+                            <input type="hidden" name="movieId" value="@Model.MovieId" />
+                            <button type="submit"
+                                    style="font-family:'Archivo Black',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;background:@(userReaction == false ? "#ff5c5c" : "var(--cs-surface)");color:@(userReaction == false ? "#fff" : "var(--cs-text)");border:3px solid #111;border-radius:8px;padding:10px 20px;box-shadow:3px 3px 0 #111;cursor:pointer;transition:transform 0.12s;">
+                                👎 Dislike @(userReaction == false ? "✓" : "")
+                            </button>
+                        </form>
+                        @if (isInWatchList)
+                        {
+                            <span style="font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;background:var(--cs-yellow);color:#000;border:2px solid #111;border-radius:999px;padding:5px 12px;box-shadow:2px 2px 0 #111;">
+                                📌 In Watchlist
+                            </span>
+                        }
+                        @if (isWatched)
+                        {
+                            <span style="font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;background:var(--cs-lime);color:#000;border:2px solid #111;border-radius:999px;padding:5px 12px;box-shadow:2px 2px 0 #111;">
+                                ✓ Watched
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Synopsis Box -->
+            <div style="border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;padding:24px;background:var(--cs-surface);">
+                <div style="font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cs-text);margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #111;">
+                    Synopsis
+                </div>
+                <p style="color:var(--cs-muted);font-size:0.95rem;line-height:1.6;margin:0;">
+                    @(Model.Description ?? "No description available.")
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CAST ── -->
+    @if (Model.Casts != null && Model.Casts.Any())
+    {
+        <div style="margin-top:56px;">
+            <div style="border-bottom:3px solid #111;padding-bottom:12px;margin-bottom:28px;display:flex;align-items:baseline;gap:16px;">
+                <h2 style="font-family:'Archivo Black',sans-serif;font-size:clamp(1.4rem,2.5vw,2rem);text-transform:uppercase;letter-spacing:-0.03em;margin:0;">Cast</h2>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
+                @foreach (var cast in Model.Casts)
+                {
+                    <div style="background:var(--cs-surface);border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;padding:16px 18px;display:flex;flex-direction:column;gap:6px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:36px;height:36px;border-radius:50%;background:var(--cs-pink);border:2px solid #111;display:flex;align-items:center;justify-content:center;font-family:'Archivo Black',sans-serif;font-size:0.85rem;color:#000;flex-shrink:0;">
+                                @(cast.Actor?.Name?.Substring(0,1).ToUpper() ?? "?")
+                            </div>
+                            <span style="font-family:'Archivo Black',sans-serif;font-size:0.85rem;text-transform:uppercase;letter-spacing:-0.01em;color:var(--cs-text);">
+                                @cast.Actor?.Name
+                            </span>
+                        </div>
+                        <div style="font-size:0.78rem;color:var(--cs-muted);">
+                            as <em>@cast.CharacterName</em>
+                        </div>
+                        <span style="font-family:'Archivo Black',sans-serif;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;background:@(cast.RoleType == "Lead" ? "var(--cs-yellow)" : "var(--cs-surface-2)");color:#000;border:2px solid #111;border-radius:4px;padding:3px 8px;box-shadow:1px 1px 0 #111;display:inline-block;align-self:flex-start;">
+                            @cast.RoleType
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- ── AUDIENCE TRANSMISSION (Reviews) ── -->
+    <div style="margin-top:56px;">
+        <div style="border-bottom:3px solid #111;padding-bottom:12px;margin-bottom:32px;">
+            <h2 style="font-family:'Archivo Black',sans-serif;font-size:clamp(1.6rem,3vw,2.4rem);text-transform:uppercase;letter-spacing:-0.03em;margin:0;">
+                Audience <span style="background:var(--cs-pink);padding:0 8px;">Transmission</span>
+            </h2>
+        </div>
+
+        @if (TempData["ReviewSuccess"] != null)
+        {
+            <div style="background:var(--cs-lime);border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;padding:14px 20px;margin-bottom:24px;font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;color:#111;">
+                ✓ @TempData["ReviewSuccess"]
+            </div>
+        }
+        @if (TempData["ReviewError"] != null)
+        {
+            <div style="background:#ff5c5c;border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;padding:14px 20px;margin-bottom:24px;font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;color:#fff;">
+                @TempData["ReviewError"]
+            </div>
+        }
+
+        <div style="display:grid;grid-template-columns:280px 1fr;gap:28px;align-items:start;">
+
+            <!-- Leave a Review Form -->
+            <div style="border:3px solid #111;border-radius:12px;box-shadow:5px 5px 0 #111;background:var(--cs-surface);padding:24px;position:sticky;top:80px;">
+                <div style="font-family:'Archivo Black',sans-serif;font-size:0.9rem;text-transform:uppercase;letter-spacing:-0.01em;color:var(--cs-text);margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #111;">
+                    Leave a Review
+                </div>
+
+                @if (!User.Identity!.IsAuthenticated)
+                {
+                    <p style="font-size:0.85rem;color:var(--cs-muted);margin-bottom:16px;">Please log in to leave a review.</p>
+                    <a asp-area="Identity" asp-page="/Account/Login"
+                       style="display:block;text-align:center;font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-yellow);color:#000;border:3px solid #111;border-radius:8px;padding:12px;box-shadow:3px 3px 0 #111;text-decoration:none;">
+                        Sign In
+                    </a>
+                }
+                else if (userHasReviewed)
+                {
+                    <p style="font-size:0.85rem;color:var(--cs-muted);">You have already reviewed this movie.</p>
                 }
                 else
                 {
-                    <span class="cs-badge cs-badge-meta">
-                        No ratings yet
-                    </span>
+                    <form asp-action="AddReview" method="post" style="display:flex;flex-direction:column;gap:16px;">
+                        <input type="hidden" name="movieId" value="@Model.MovieId" />
+
+                        <div>
+                            <div style="font-family:'Archivo Black',sans-serif;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cs-muted);margin-bottom:6px;">Rating</div>
+                            <select name="rating" required
+                                    style="width:100%;border:3px solid #111;border-radius:8px;padding:12px 14px;font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;background:var(--cs-bg);color:var(--cs-text);box-shadow:3px 3px 0 #111;outline:none;cursor:pointer;">
+                                <option value="">Select rating</option>
+                                @for (int i = 10; i >= 1; i--)
+                                {
+                                    <option value="@i">@i / 10</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            <div style="font-family:'Archivo Black',sans-serif;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cs-muted);margin-bottom:6px;">Review Text</div>
+                            <textarea name="reviewText" rows="5" required
+                                      placeholder="Transmit your thoughts..."
+                                      style="width:100%;border:3px solid #111;border-radius:8px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:0.88rem;background:var(--cs-bg);color:var(--cs-text);box-shadow:3px 3px 0 #111;outline:none;resize:vertical;"></textarea>
+                        </div>
+
+                        <button type="submit"
+                                style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;background:#111;color:#fff;border:3px solid #111;border-radius:8px;padding:14px;box-shadow:4px 4px 0 #555;cursor:pointer;transition:transform 0.12s,box-shadow 0.12s;"
+                                onmouseover="this.style.transform='translate(-2px,-2px)'"
+                                onmouseout="this.style.transform=''">
+                            Submit Review
+                        </button>
+                    </form>
                 }
             </div>
 
-            @if (Model.Director != null)
-            {
-                <p class="mb-2">
-                    <strong>Director:</strong> @Model.Director.Name
-                    <span class="cs-muted small ms-2">(@Model.Director.AwardsCount awards)</span>
-                </p>
-            }
-
-            <div class="cs-divider"></div>
-
-            <h5>Description</h5>
-            <p class="cs-muted">@(Model.Description ?? "No description available.")</p>
-
-            @if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                <div class="mt-4">
-                    <h5 class="mb-3">Your Reaction</h5>
-
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        @if (userReaction == true)
-                        {
-                            <span class="cs-badge cs-badge-liked">Liked</span>
-                        }
-                        else if (userReaction == false)
-                        {
-                            <span class="cs-badge cs-badge-disliked">Disliked</span>
-                        }
-                        else
-                        {
-                            <span class="cs-badge cs-badge-meta">No reaction yet</span>
-                        }
-                    </div>
-
-                    <div class="d-flex flex-wrap gap-2 mb-4">
-                        <form asp-action="Like" method="post" class="d-inline">
-                            <input type="hidden" name="movieId" value="@Model.MovieId" />
-                            <button type="submit" class="btn cs-btn cs-btn-like">
-                                Like
-                            </button>
-                        </form>
-
-                        <form asp-action="Dislike" method="post" class="d-inline">
-                            <input type="hidden" name="movieId" value="@Model.MovieId" />
-                            <button type="submit" class="btn cs-btn cs-btn-dislike">
-                                Dislike
-                            </button>
-                        </form>
-
-                        @if (isInWatchList)
-                        {
-                            <form asp-controller="WatchList" asp-action="Remove" method="post" class="d-inline">
-                                <input type="hidden" name="movieId" value="@Model.MovieId" />
-                                <button type="submit" class="btn cs-btn cs-btn-dislike">
-                                    Remove from Watchlist
-                                </button>
-                            </form>
-                        }
-                        else
-                        {
-                            <form asp-controller="Recommendation" asp-action="AddToWatchList" method="post" class="d-inline">
-                                <input type="hidden" name="movieId" value="@Model.MovieId" />
-                                <button type="submit" class="btn cs-btn cs-btn-watchlist">
-                                    Add to Watchlist
-                                </button>
-                            </form>
-                        }
-
-                        @if (isWatched)
-                        {
-                            <form asp-controller="WatchList" asp-action="MarkToWatch" method="post" class="d-inline">
-                                <input type="hidden" name="movieId" value="@Model.MovieId" />
-                                <button type="submit" class="btn cs-btn cs-btn-neutral">
-                                    Move Back to To Watch
-                                </button>
-                            </form>
-                        }
-                        else
-                        {
-                            <form asp-controller="WatchList" asp-action="MarkWatched" method="post" class="d-inline">
-                                <input type="hidden" name="movieId" value="@Model.MovieId" />
-                                <button type="submit" class="btn cs-btn cs-btn-watched">
-                                    Mark as Watched
-                                </button>
-                            </form>
-                        }
-                    </div>
-
-                    <div class="d-flex flex-wrap gap-2 mb-4">
-                        @if (isInWatchList)
-                        {
-                            <span class="cs-badge cs-badge-watchlist">In Watchlist</span>
-                        }
-
-                        @if (isWatched)
-                        {
-                            <span class="cs-badge cs-badge-watched">Watched</span>
-                        }
-                    </div>
-                </div>
-            }
-
-            @if (Model.Casts != null && Model.Casts.Any())
-            {
-                <div class="cs-divider"></div>
-                <h5>Cast</h5>
-                <div class="row g-2 mt-1">
-                    @foreach (var cast in Model.Casts)
-                    {
-                        <div class="col-md-4">
-                            <div class="cs-card p-3 h-100">
-                                <div class="fw-semibold">@cast.Actor?.Name</div>
-                                <small class="cs-muted">
-                                    as <em>@cast.CharacterName</em>
-                                    <span class="cs-badge @(cast.RoleType == "Lead" ? "cs-badge-rating" : "cs-badge-meta") ms-1">
-                                        @cast.RoleType
-                                    </span>
-                                </small>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    </div>
-
-    <div class="cs-divider"></div>
-
-    <div class="row">
-        <div class="col-lg-7">
-            <h4>Reviews</h4>
-
-            @if (TempData["ReviewSuccess"] != null)
-            {
-                <div class="alert alert-success mt-3">@TempData["ReviewSuccess"]</div>
-            }
-
-            @if (TempData["ReviewError"] != null)
-            {
-                <div class="alert alert-danger mt-3">@TempData["ReviewError"]</div>
-            }
-
-            @if (Model.Reviews != null && Model.Reviews.Any())
-            {
-                <div class="mt-3">
+            <!-- Reviews List -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+                @if (Model.Reviews != null && Model.Reviews.Any())
+                {
                     @foreach (var review in Model.Reviews.OrderByDescending(r => r.Date))
                     {
-                        <div class="cs-card p-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <strong>@(review.User?.UserName ?? "Anonymous")</strong>
-                                    <span class="cs-badge cs-badge-rating">
-                                        Rating @review.Rating / 10
+                        <div style="border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;background:var(--cs-surface);padding:20px 22px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+                                <div style="display:flex;align-items:center;gap:12px;">
+                                    <div style="width:42px;height:42px;border-radius:6px;background:@GetAvatarBg(review.User?.UserName);border:2px solid #111;display:flex;align-items:center;justify-content:center;font-family:'Archivo Black',sans-serif;font-size:0.85rem;color:#000;flex-shrink:0;box-shadow:2px 2px 0 #111;">
+                                        @GetAvatarInitials(review.User?.UserName)
+                                    </div>
+                                    <span style="font-family:'Archivo Black',sans-serif;font-size:0.88rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--cs-text);">
+                                        @(review.User?.UserName ?? "Anonymous")
                                     </span>
                                 </div>
-
-                                <p class="mb-2">@review.ReviewText</p>
-
-                                <small class="cs-muted">
-                                    @review.Date.ToString("dd MMM yyyy, HH:mm")
-                                </small>
+                                <span style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;background:#111;color:var(--cs-yellow);border:2px solid #111;border-radius:4px;padding:5px 12px;box-shadow:2px 2px 0 #555;">
+                                    @review.Rating/10 Stars
+                                </span>
+                            </div>
+                            <p style="font-size:0.9rem;color:var(--cs-muted);line-height:1.5;margin:0 0 10px 0;font-style:italic;">
+                                "@review.ReviewText"
+                            </p>
+                            <div style="font-size:0.75rem;color:var(--cs-muted);font-family:'Archivo Black',sans-serif;text-transform:uppercase;letter-spacing:0.06em;">
+                                @review.Date.ToString("dd MMM yyyy")
+                            </div>
                         </div>
                     }
-                </div>
-            }
-            else
-            {
-                <div class="alert alert-info mt-3">
-                    No reviews yet. Be the first to review this movie.
-                </div>
-            }
-        </div>
-
-        <div class="col-lg-5">
-            <h4>Leave a Review</h4>
-
-            @if (!User.Identity!.IsAuthenticated)
-            {
-                <div class="alert alert-warning mt-3">
-                    Please log in to leave a review.
-                </div>
-            }
-            else if (userHasReviewed)
-            {
-                <div class="alert alert-secondary mt-3">
-                    You have already reviewed this movie.
-                </div>
-            }
-            else
-            {
-                <form asp-action="AddReview" method="post" class="mt-3">
-                    <input type="hidden" name="movieId" value="@Model.MovieId" />
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Rating (1 - 10)</label>
-                        <select name="rating" class="form-select" required>
-                            <option value="">Select rating</option>
-                            @for (int i = 1; i <= 10; i++)
-                            {
-                                <option value="@i">@i</option>
-                            }
-                        </select>
+                }
+                else
+                {
+                    <div style="border:3px dashed #111;border-radius:10px;padding:48px;text-align:center;background:var(--cs-surface);">
+                        <div style="font-size:2rem;margin-bottom:12px;">📡</div>
+                        <div style="font-family:'Archivo Black',sans-serif;font-size:1rem;text-transform:uppercase;letter-spacing:-0.01em;margin-bottom:8px;">No Transmissions Yet</div>
+                        <p style="color:var(--cs-muted);font-size:0.88rem;">Be the first to review this movie.</p>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Comment</label>
-                        <textarea name="reviewText" class="form-control" rows="5"
-                              placeholder="Write your opinion about this movie..." required></textarea>
-                    </div>
-
-                    <button type="submit" class="btn cs-btn cs-btn-blue w-100">
-                        Submit Review
-                    </button>
-                </form>
-            }
+                }
+            </div>
         </div>
     </div>
 
+    <!-- ── SIMILAR TITLES ── -->
     @if (similarMovies != null && similarMovies.Any())
     {
-        <hr class="my-4" />
+        <div style="margin-top:56px;">
+            <div style="border-bottom:3px solid #111;padding-bottom:12px;margin-bottom:28px;">
+                <h2 style="font-family:'Archivo Black',sans-serif;font-size:clamp(1.6rem,3vw,2.4rem);text-transform:uppercase;letter-spacing:-0.03em;margin:0;">
+                    Similar <span style="font-style:italic;background:var(--cs-blue);padding:0 8px;">Titles</span>
+                </h2>
+            </div>
 
-        <div class="mt-4">
-            <h4>Similar Movies</h4>
-            <div class="row g-4 mt-1">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;">
                 @foreach (var similar in similarMovies)
                 {
-                    <div class="col-md-3">
-                        <div class="cs-card p-0 overflow-hidden h-100">
-                            @if (!string.IsNullOrEmpty(similar.PosterPath))
-                            {
-                                <img src="@similar.PosterPath"
-                                     alt="@similar.Title"
-                                     class="cs-poster cs-poster-sm cs-poster-plain"
-                                     loading="lazy"
-                                     decoding="async" />
-                            }
-                            else
-                            {
-                                <div class="cs-poster-placeholder cs-poster-sm rounded-0 border-0 shadow-none">
-                                    <span class="fs-3">Movie</span>
-                                </div>
-                            }
-
-                            <div class="p-3 d-flex flex-column">
-                                <h6 class="fw-bold mb-2">@similar.Title</h6>
-
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="cs-badge cs-badge-category">@similar.CategoryName</span>
-                                    <span class="cs-badge cs-badge-meta">@similar.Year</span>
-                                </div>
-
-                                <div class="mb-3">
-                                    <span class="cs-badge cs-badge-rating">
-                                        Similarity @similar.SimilarityScore.ToString("F2")
-                                    </span>
-                                </div>
-
-                                <a asp-action="Details"
-                                   asp-route-id="@similar.MovieId"
-                                   class="btn cs-btn cs-btn-blue w-100 mt-auto">
-                                    View Details
-                                </a>
+                    <div style="background:var(--cs-surface);border:3px solid #111;border-radius:12px;box-shadow:4px 4px 0 #111;overflow:hidden;transition:transform 0.14s,box-shadow 0.14s;"
+                         onmouseover="this.style.transform='translate(-3px,-3px)';this.style.boxShadow='7px 7px 0 #111'"
+                         onmouseout="this.style.transform='';this.style.boxShadow='4px 4px 0 #111'">
+                        @if (!string.IsNullOrEmpty(similar.PosterPath))
+                        {
+                            <img src="@similar.PosterPath" alt="@similar.Title"
+                                 loading="lazy" decoding="async"
+                                 style="width:100%;aspect-ratio:2/3;object-fit:cover;display:block;border-bottom:3px solid #111;" />
+                        }
+                        else
+                        {
+                            <div style="width:100%;aspect-ratio:2/3;background:var(--cs-surface-2);display:flex;align-items:center;justify-content:center;font-size:2rem;border-bottom:3px solid #111;">🎬</div>
+                        }
+                        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <span style="font-family:'Archivo Black',sans-serif;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;background:var(--cs-blue);color:#000;border:2px solid #111;border-radius:999px;padding:3px 10px;box-shadow:1px 1px 0 #111;">
+                                    @similar.CategoryName
+                                </span>
+                                <span style="font-family:'Archivo Black',sans-serif;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-surface-2);color:var(--cs-text);border:2px solid #111;border-radius:999px;padding:3px 10px;box-shadow:1px 1px 0 #111;">
+                                    @similar.Year
+                                </span>
                             </div>
+                            <div style="font-family:'Archivo Black',sans-serif;font-size:0.88rem;text-transform:uppercase;letter-spacing:-0.01em;color:var(--cs-text);">
+                                @similar.Title
+                            </div>
+                            <a asp-action="Details" asp-route-id="@similar.MovieId"
+                               style="display:block;text-align:center;font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;background:#111;color:#fff;border:2px solid #111;border-radius:6px;padding:10px;text-decoration:none;box-shadow:3px 3px 0 #555;margin-top:4px;">
+                                View Details →
+                            </a>
                         </div>
                     </div>
                 }
@@ -343,7 +388,86 @@
         </div>
     }
 
-    <div class="mt-4">
-        <a asp-action="Index" class="btn cs-btn cs-btn-neutral">Back to Movies</a>
+    <!-- Back -->
+    <div style="margin-top:48px;">
+        <a asp-action="Index"
+           style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-surface);color:var(--cs-text);border:3px solid #111;border-radius:8px;padding:12px 24px;box-shadow:4px 4px 0 #111;text-decoration:none;display:inline-block;">
+            ← Back to Movies
+        </a>
     </div>
 </div>
+
+@functions {
+    string GetAvatarInitials(string? username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            return "??";
+
+        var len = Math.Min(2, username.Length);
+        return username.Substring(0, len).ToUpperInvariant();
+    }
+
+    string GetAvatarBg(string? username)
+    {
+        var initials = GetAvatarInitials(username);
+        var avatarColors = new[] { "#ff90e8", "#7dd3fc", "#c6f62e", "#ffd100", "#ff5c5c" };
+        return avatarColors[Math.Abs(initials.GetHashCode()) % avatarColors.Length];
+    }
+}
+
+<style>
+    .det-hero {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 48px;
+        align-items: start;
+    }
+
+    .det-poster-col { position: sticky; top: 80px; }
+
+    .det-info-col { min-width: 0; }
+
+    .det-btn {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border: 3px solid #111;
+        border-radius: 8px;
+        padding: 12px 20px;
+        cursor: pointer;
+        box-shadow: 4px 4px 0 #111;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .det-btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 #111;
+    }
+
+    .det-btn-yellow { background: var(--cs-yellow); color: #000; }
+    .det-btn-yellow:hover { color: #000; }
+    .det-btn-pink { background: var(--cs-pink); color: #000; }
+    .det-btn-pink:hover { color: #000; }
+    .det-btn-lime { background: var(--cs-lime); color: #000; }
+    .det-btn-lime:hover { color: #000; }
+    .det-btn-outline { background: var(--cs-surface); color: var(--cs-text); }
+    .det-btn-outline:hover { color: var(--cs-text); }
+
+    @@media (max-width: 900px) {
+        .det-hero { grid-template-columns: 1fr; }
+        .det-poster-col { position: static; }
+    }
+
+    @@media (max-width: 700px) {
+        div[style*="grid-template-columns:280px"] {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        div[style*="grid-template-columns:repeat(4"] {
+            grid-template-columns: repeat(2,1fr) !important;
+        }
+    }
+</style>

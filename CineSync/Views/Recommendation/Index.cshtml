@@ -1,218 +1,548 @@
 @model CineSync.ViewModels.RecommendationViewModel
-
 @{
-    ViewData["Title"] = "Recommendations";
+    ViewData["Title"] = "Discover";
 }
 
-<div class="cs-max-1400">
-    <div class="mb-4">
-        <h2>Recommendations</h2>
-        <p class="cs-muted mb-0">Discover movies tailored for you.</p>
+<div class="rec-shell">
+    <div id="recToast" class="rec-toast" style="display:none;"></div>
+
+    <!-- EMPTY STATE (hidden by default, shown by JS) -->
+    <div id="recEmpty" class="rec-empty" style="display:none;">
+        <div class="rec-empty-icon">🎬</div>
+        <div class="rec-empty-title">No Recommendations</div>
+        <p class="rec-empty-text">Browse and interact with movies to get personalized picks.</p>
+        <a href="/Movie" class="rec-empty-btn">Browse Movies →</a>
     </div>
 
-    @if (TempData["Info"] != null)
-    {
-        <div class="alert alert-info">@TempData["Info"]</div>
-    }
-
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
-    }
-
-    @if (Model.Movie == null)
-    {
-        <div class="alert alert-warning">
-            No recommendations are available right now.
+    <!-- MAIN CARD -->
+    <div id="recCard" class="rec-card" style="display:none;">
+        <div class="rec-poster-layer">
+            <img id="recPosterImg" src="" alt="" class="rec-poster-img" />
+            <div id="recPosterPlaceholder" class="rec-poster-placeholder" style="display:none;">🎬</div>
+            <div class="rec-gradient"></div>
         </div>
 
-        <a asp-controller="Movie" asp-action="Index" class="btn cs-btn cs-btn-blue">
-            Browse Movies
+        <div class="rec-top-bar">
+            <span class="rec-badge-recommended">Recommended For You</span>
+            <span id="recCounter" class="rec-counter">1/1</span>
+        </div>
+
+        <div class="rec-bottom-info">
+            <div class="rec-meta-row">
+                <span id="recCategory" class="rec-badge-category"></span>
+                <span id="recYear" class="rec-year"></span>
+                <span id="recRating" class="rec-rating" style="display:none;"></span>
+            </div>
+            <h2 id="recTitle" class="rec-title"></h2>
+            <p id="recDesc" class="rec-desc"></p>
+            <div id="recStatusRow" class="rec-status-row"></div>
+        </div>
+    </div>
+
+    <!-- ACTION PANEL -->
+    <div id="recActions" class="rec-actions" style="display:none;">
+
+        <button id="btnLike" class="rec-action-btn" data-action="like" title="Like">
+            <span class="rec-action-icon">👍</span>
+            <span class="rec-action-label">Like</span>
+        </button>
+
+        <button id="btnDislike" class="rec-action-btn" data-action="dislike" title="Dislike">
+            <span class="rec-action-icon">👎</span>
+            <span class="rec-action-label">Dislike</span>
+        </button>
+
+        <button id="btnWatchlist" class="rec-action-btn" data-action="watchlist" title="Watchlist">
+            <span class="rec-action-icon">🔖</span>
+            <span class="rec-action-label">Watchlist</span>
+        </button>
+
+        <button id="btnWatched" class="rec-action-btn" data-action="watched" title="Watched">
+            <span class="rec-action-icon">✓</span>
+            <span class="rec-action-label">Watched</span>
+        </button>
+
+        <a id="btnDetails" href="#" class="rec-action-btn rec-action-link" title="Details">
+            <span class="rec-action-icon">ℹ</span>
+            <span class="rec-action-label">Details</span>
         </a>
-    }
-    else
-    {
-        <div class="cs-recommendation-layout">
-            <div class="d-flex flex-column gap-4">
-                <div>
-                    @if (!string.IsNullOrEmpty(Model.Movie.PosterPath))
-                    {
-                        <div class="cs-image-shell">
-                            <img src="@Model.Movie.PosterPath"
-                                 alt="@Model.Movie.Title"
-                                 class="cs-poster cs-poster-md cs-poster-plain"
-                                 width="560"
-                                 height="420"
-                                 loading="lazy"
-                                 decoding="async" />
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="cs-poster-placeholder cs-poster-md">
-                            <span class="display-3">Movie</span>
-                        </div>
-                    }
-                </div>
 
-                <div class="cs-card p-4 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h3 class="mb-0">@Model.Movie.Title</h3>
-                            <span class="cs-badge cs-badge-dark">
-                                @(Model.CurrentIndex + 1) / @Model.TotalRecommendations
-                            </span>
-                        </div>
-
-                        <div class="d-flex flex-wrap gap-2 mb-3">
-                            <span class="cs-badge cs-badge-category">@Model.Movie.Category?.Name</span>
-                            <span class="cs-badge cs-badge-meta">@Model.Movie.Year</span>
-
-                            @if (Model.AverageRating.HasValue)
-                            {
-                                <span class="cs-badge cs-badge-rating">
-                                    Rating @Model.AverageRating.Value.ToString("F1") / 10
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="cs-badge cs-badge-meta">
-                                    No rating yet
-                                </span>
-                            }
-                        </div>
-
-                        <p class="mb-2">
-                            <strong>Director:</strong>
-                            @(Model.Movie.Director?.Name ?? "Unknown")
-                        </p>
-
-                        <p class="mb-2">
-                            <strong>Reviews:</strong> @Model.ReviewCount
-                        </p>
-
-                        <p class="mb-3">
-                            <strong>Why recommended?</strong><br />
-                            <span class="cs-muted">@Model.Reason</span>
-                        </p>
-
-                        <p class="cs-muted flex-grow-1" style="min-height: 120px;">
-                            @(string.IsNullOrWhiteSpace(Model.Movie.Description)
-                                ? "No description available."
-                                : Model.Movie.Description)
-                        </p>
-
-                        <div class="mb-3">
-                            @if (Model.UserReaction == true)
-                            {
-                                <span class="cs-badge cs-badge-liked me-2">Liked</span>
-                            }
-                            else if (Model.UserReaction == false)
-                            {
-                                <span class="cs-badge cs-badge-disliked me-2">Disliked</span>
-                            }
-
-                            @if (Model.IsInWatchList)
-                            {
-                                <span class="cs-badge cs-badge-watchlist me-2">In Watchlist</span>
-                            }
-
-                            @if (Model.IsWatched)
-                            {
-                                <span class="cs-badge cs-badge-watched">Watched</span>
-                            }
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <form asp-action="Like" method="post">
-                                <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
-                                <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                <button type="submit" class="btn cs-btn cs-btn-like w-100">
-                                    Like
-                                </button>
-                            </form>
-
-                            <form asp-action="Dislike" method="post">
-                                <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
-                                <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                <button type="submit" class="btn cs-btn cs-btn-dislike w-100">
-                                    Dislike
-                                </button>
-                            </form>
-
-                            @if (!Model.IsInWatchList)
-                            {
-                                <form asp-action="AddToWatchList" method="post">
-                                    <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
-                                    <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                    <button type="submit" class="btn cs-btn cs-btn-watchlist w-100">
-                                        Add to Watchlist
-                                    </button>
-                                </form>
-                            }
-
-                            @if (!Model.IsWatched)
-                            {
-                                <form asp-action="MarkWatched" method="post">
-                                    <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
-                                    <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                    <button type="submit" class="btn cs-btn cs-btn-watched w-100">
-                                        Mark as Watched
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <form asp-action="MarkToWatch" method="post">
-                                    <input type="hidden" name="movieId" value="@Model.Movie.MovieId" />
-                                    <input type="hidden" name="currentIndex" value="@Model.CurrentIndex" />
-                                    <button type="submit" class="btn cs-btn cs-btn-neutral w-100">
-                                        Move Back to To-Watch
-                                    </button>
-                                </form>
-                            }
-
-                            <a asp-controller="Movie"
-                               asp-action="Details"
-                               asp-route-id="@Model.Movie.MovieId"
-                               class="btn cs-btn cs-btn-blue w-100">
-                                View Details
-                            </a>
-
-                            <a asp-action="Next"
-                               asp-route-currentIndex="@Model.CurrentIndex"
-                               class="btn cs-btn cs-btn-dark w-100">
-                                Next
-                            </a>
-                        </div>
-                </div>
-            </div>
-
-            <div class="cs-card p-0 overflow-hidden">
-                    @if (!string.IsNullOrEmpty(Model.Movie.PosterPath))
-                    {
-                        <div class="cs-image-shell rounded-0">
-                            <img src="@Model.Movie.PosterPath"
-                                 alt="@Model.Movie.Title"
-                                 class="cs-poster cs-poster-lg cs-poster-plain"
-                                 width="1000"
-                                 height="760"
-                                 loading="lazy"
-                                 decoding="async" />
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="cs-poster-placeholder cs-poster-lg rounded-0 border-0 shadow-none">
-                            <div class="text-center">
-                                <div class="display-1 cs-muted mb-3">Movie</div>
-                                <h4 class="cs-muted">Trailer placeholder area</h4>
-                                <p class="cs-muted mb-0">
-                                    This section can later be replaced with a trailer or video preview.
-                                </p>
-                            </div>
-                        </div>
-                    }
-            </div>
-        </div>
-    }
+        <button id="btnNext" class="rec-action-btn rec-action-next" title="Next">
+            <span class="rec-action-icon">▶</span>
+            <span class="rec-action-label">Next</span>
+        </button>
+    </div>
 </div>
+
+<style>
+.rec-shell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    min-height: calc(100vh - 60px);
+    padding: 40px;
+    background: var(--cs-bg);
+}
+
+.rec-card {
+    position: relative;
+    width: min(640px, 100%);
+    aspect-ratio: 5/6;
+    border: 3px solid #111;
+    border-radius: 20px;
+    box-shadow: 10px 10px 0 #111;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.rec-poster-layer { position: absolute; inset: 0; }
+
+.rec-poster-img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+}
+
+.rec-poster-placeholder {
+    width: 100%; height: 100%;
+    background: var(--cs-surface-2);
+    display: flex; align-items: center;
+    justify-content: center; font-size: 5rem;
+}
+
+.rec-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.3) 0%, transparent 30%,
+        transparent 45%, rgba(0,0,0,0.7) 70%,
+        rgba(0,0,0,0.95) 100%
+    );
+}
+
+.rec-top-bar {
+    position: absolute; top: 20px;
+    left: 20px; right: 20px;
+    display: flex; align-items: center;
+    justify-content: space-between; z-index: 2;
+}
+
+.rec-badge-recommended {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.1em; background: var(--cs-yellow);
+    color: #000; border: 2px solid #111;
+    border-radius: 4px; padding: 6px 14px;
+    box-shadow: 3px 3px 0 #111;
+}
+
+.rec-counter {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.9rem; background: rgba(0,0,0,0.6);
+    color: #fff; border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 999px; padding: 6px 16px;
+    backdrop-filter: blur(4px);
+}
+
+.rec-bottom-info {
+    position: absolute; bottom: 0;
+    left: 0; right: 0;
+    padding: 22px 22px 24px; z-index: 2;
+}
+
+.rec-meta-row {
+    display: flex; align-items: center;
+    gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
+}
+
+.rec-badge-category {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.1em; background: #fff;
+    color: #000; border: 2px solid #111;
+    border-radius: 4px; padding: 4px 10px;
+    box-shadow: 2px 2px 0 #111;
+}
+
+.rec-year {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.88rem; color: rgba(255,255,255,0.8);
+    letter-spacing: 0.06em;
+}
+
+.rec-rating {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.78rem; background: var(--cs-yellow);
+    color: #000; border: 2px solid #111;
+    border-radius: 999px; padding: 3px 10px;
+    box-shadow: 2px 2px 0 #111;
+}
+
+.rec-title {
+    font-family: "Archivo Black", sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    text-transform: uppercase; letter-spacing: -0.04em;
+    line-height: 1; color: #fff; margin: 0 0 12px 0;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.rec-desc {
+    font-size: 0.9rem; color: rgba(255,255,255,0.75);
+    line-height: 1.5; margin: 0 0 14px 0; max-width: 520px;
+}
+
+.rec-status-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.rec-status-badge {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.62rem; text-transform: uppercase;
+    letter-spacing: 0.08em; border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 4px; padding: 4px 10px;
+}
+
+.rec-status-liked    { background: var(--cs-pink);   color: #000; border-color: #111; }
+.rec-status-disliked { background: var(--cs-red);    color: #fff; border-color: #111; }
+.rec-status-watchlist{ background: var(--cs-yellow); color: #000; border-color: #111; }
+.rec-status-watched  { background: var(--cs-lime);   color: #000; border-color: #111; }
+.rec-status-reason   { background: rgba(0,0,0,0.5);  color: rgba(255,255,255,0.8); }
+
+/* Actions */
+.rec-actions {
+    display: flex; flex-direction: column;
+    gap: 12px; align-items: center;
+}
+
+.rec-action-btn {
+    width: 72px; height: 72px;
+    border: 3px solid #111; border-radius: 12px;
+    box-shadow: 4px 4px 0 #111;
+    background: var(--cs-surface); color: var(--cs-text);
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px; text-decoration: none;
+    transition: transform 0.12s, box-shadow 0.12s; padding: 0;
+}
+
+.rec-action-btn:hover {
+    transform: translate(-2px,-2px);
+    box-shadow: 6px 6px 0 #111; color: var(--cs-text);
+}
+
+.rec-action-icon { font-size: 1.4rem; line-height: 1; }
+
+.rec-action-label {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.55rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--cs-muted);
+}
+
+.rec-action-active-like     { background: var(--cs-yellow) !important; }
+.rec-action-active-dislike  { background: var(--cs-pink)   !important; }
+.rec-action-active-watchlist{ background: var(--cs-blue)   !important; }
+.rec-action-active-watched  { background: var(--cs-lime)   !important; }
+
+.rec-action-next {
+    background: #111 !important; color: #fff; margin-top: 8px;
+}
+.rec-action-next .rec-action-label { color: rgba(255,255,255,0.7); }
+.rec-action-next:hover { background: var(--cs-yellow) !important; color: #000; }
+.rec-action-next:hover .rec-action-label { color: #000; }
+
+.rec-action-link { background: var(--cs-blue) !important; color: #000; }
+.rec-action-link:hover { color: #000; }
+.rec-action-link .rec-action-label { color: rgba(0,0,0,0.7); }
+
+/* Toast */
+.rec-toast {
+    position: fixed; top: 80px; right: 24px;
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.06em; border: 3px solid #111;
+    border-radius: 8px; box-shadow: 4px 4px 0 #111;
+    padding: 12px 20px; z-index: 9999;
+    background: var(--cs-lime); color: #000;
+}
+
+/* Empty */
+.rec-empty {
+    text-align: center; padding: 80px 40px;
+    border: 3px solid #111; border-radius: 20px;
+    box-shadow: 8px 8px 0 #111;
+    background: var(--cs-surface); max-width: 500px;
+}
+.rec-empty-icon  { font-size: 3.5rem; margin-bottom: 16px; }
+.rec-empty-title {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 1.6rem; text-transform: uppercase;
+    letter-spacing: -0.02em; margin-bottom: 12px;
+}
+.rec-empty-text  { color: var(--cs-muted); font-size: 0.9rem; margin-bottom: 24px; line-height: 1.6; }
+.rec-empty-btn {
+    font-family: "Archivo Black", sans-serif; font-size: 0.82rem;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    background: var(--cs-yellow); color: #000;
+    border: 3px solid #111; border-radius: 8px;
+    padding: 14px 28px; box-shadow: 4px 4px 0 #111;
+    text-decoration: none; display: inline-block;
+}
+
+/* Animations */
+@@keyframes cardEnter {
+    from { opacity: 0; transform: translateY(60px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+@@keyframes cardExitUp {
+    from { opacity: 1; transform: translateY(0)    scale(1);    }
+    to   { opacity: 0; transform: translateY(-80px) scale(0.95); }
+}
+@@keyframes cardExitRight {
+    from { opacity: 1; transform: translateX(0)    rotate(0deg); }
+    to   { opacity: 0; transform: translateX(140px) rotate(8deg); }
+}
+@@keyframes cardExitLeft {
+    from { opacity: 1; transform: translateX(0)     rotate(0deg);  }
+    to   { opacity: 0; transform: translateX(-140px) rotate(-8deg); }
+}
+
+.anim-enter        { animation: cardEnter     0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.anim-exit-up      { animation: cardExitUp    0.28s ease-in forwards; }
+.anim-exit-right   { animation: cardExitRight 0.28s ease-in forwards; }
+.anim-exit-left    { animation: cardExitLeft  0.28s ease-in forwards; }
+
+@@media (max-width: 900px) {
+    .rec-shell { flex-direction: column; padding: 20px 16px; min-height: auto; }
+    .rec-card  { width: 100%; }
+    .rec-actions { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .rec-action-btn { width: 64px; height: 64px; }
+}
+</style>
+
+@section Scripts {
+<script>
+(function () {
+    // ── State ──────────────────────────────────────────
+    let currentIndex = @(Model?.CurrentIndex ?? 0);
+    let currentMovieId = @(Model?.Movie?.MovieId ?? 0);
+    let isAnimating = false;
+
+    // ── Elements ───────────────────────────────────────
+    const card       = document.getElementById('recCard');
+    const actions    = document.getElementById('recActions');
+    const emptyEl    = document.getElementById('recEmpty');
+    const toast      = document.getElementById('recToast');
+
+    const elPoster   = document.getElementById('recPosterImg');
+    const elPlaceh   = document.getElementById('recPosterPlaceholder');
+    const elCounter  = document.getElementById('recCounter');
+    const elCategory = document.getElementById('recCategory');
+    const elYear     = document.getElementById('recYear');
+    const elRating   = document.getElementById('recRating');
+    const elTitle    = document.getElementById('recTitle');
+    const elDesc     = document.getElementById('recDesc');
+    const elStatus   = document.getElementById('recStatusRow');
+    const elDetails  = document.getElementById('btnDetails');
+
+    const btnLike      = document.getElementById('btnLike');
+    const btnDislike   = document.getElementById('btnDislike');
+    const btnWatchlist = document.getElementById('btnWatchlist');
+    const btnWatched   = document.getElementById('btnWatched');
+    const btnNext      = document.getElementById('btnNext');
+
+    // ── Anti-token pentru request CSRF ────────────────
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+    // ── Helpers ────────────────────────────────────────
+    function showToast(msg, color) {
+        toast.textContent = msg;
+        toast.style.background = color || 'var(--cs-lime)';
+        toast.style.display = 'block';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    function animateCard(exitClass) {
+        return new Promise((resolve) => {
+            if (isAnimating) {
+                resolve();
+                return;
+            }
+
+            isAnimating = true;
+            card.classList.remove('anim-enter', 'anim-exit-up', 'anim-exit-right', 'anim-exit-left');
+            void card.offsetWidth; // reflow before exit
+            card.classList.add(exitClass);
+
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                card.style.visibility = 'hidden';
+                resolve();
+            };
+
+            card.addEventListener('animationend', finish, { once: true });
+            setTimeout(finish, 340);
+        });
+    }
+
+    function renderMovie(data) {
+        // Poster
+        if (data.posterPath) {
+            elPoster.src = data.posterPath;
+            elPoster.alt = data.title;
+            elPoster.style.display = 'block';
+            elPlaceh.style.display = 'none';
+        } else {
+            elPoster.style.display = 'none';
+            elPlaceh.style.display = 'flex';
+        }
+
+        // Counter
+        elCounter.textContent = `${data.currentIndex + 1}/${data.total}`;
+
+        // Meta
+        elCategory.textContent = (data.categoryName || '—').toUpperCase();
+        elYear.textContent = data.year || '';
+
+        if (data.avgRating != null) {
+            elRating.textContent = `★ ${Number(data.avgRating).toFixed(1)}`;
+            elRating.style.display = 'inline-block';
+        } else {
+            elRating.style.display = 'none';
+        }
+
+        // Title — first word normal, rest italic yellow
+        const words = (data.title || '').split(' ');
+        const first = words[0] || '';
+        const rest  = words.slice(1).join(' ');
+        elTitle.innerHTML = rest
+            ? `${escHtml(first)} <span style="color:var(--cs-yellow);font-style:italic;">${escHtml(rest)}</span>`
+            : escHtml(first);
+
+        // Description
+        const desc = data.description || '';
+        elDesc.textContent = desc.length > 140 ? desc.slice(0, 140) + '...' : desc;
+
+        // Status badges
+        let statusHtml = '';
+        if (data.userReaction === true)
+            statusHtml += `<span class="rec-status-badge rec-status-liked">👍 Liked</span>`;
+        else if (data.userReaction === false)
+            statusHtml += `<span class="rec-status-badge rec-status-disliked">👎 Disliked</span>`;
+        if (data.isInWatchList)
+            statusHtml += `<span class="rec-status-badge rec-status-watchlist">📌 Watchlist</span>`;
+        if (data.isWatched)
+            statusHtml += `<span class="rec-status-badge rec-status-watched">✓ Watched</span>`;
+        if (data.reason)
+            statusHtml += `<span class="rec-status-badge rec-status-reason">${escHtml(data.reason)}</span>`;
+        elStatus.innerHTML = statusHtml;
+
+        // Action button states
+        btnLike.classList.toggle('rec-action-active-like',       data.userReaction === true);
+        btnDislike.classList.toggle('rec-action-active-dislike', data.userReaction === false);
+        btnWatchlist.classList.toggle('rec-action-active-watchlist', data.isInWatchList);
+        btnWatched.classList.toggle('rec-action-active-watched',     data.isWatched);
+
+        // Details link
+        elDetails.href = `/Movie/Details/${data.movieId}`;
+
+        // Update state
+        currentMovieId = data.movieId;
+        currentIndex   = data.currentIndex;
+    }
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Load a recommendation ──────────────────────────
+    async function loadRec(index, exitAnim) {
+        const go = async () => {
+            try {
+                const res  = await fetch(`/Recommendation/GetRecommendation?currentIndex=${index}`);
+                const data = await res.json();
+
+                if (data.empty) {
+                    card.style.display    = 'none';
+                    actions.style.display = 'none';
+                    emptyEl.style.display = 'block';
+                    return;
+                }
+
+                renderMovie(data);
+                card.style.display    = 'flex';
+                actions.style.display = 'flex';
+                emptyEl.style.display = 'none';
+
+                // Reset hidden exit state and play enter animation
+                card.style.visibility = 'visible';
+                card.classList.remove('anim-exit-up', 'anim-exit-right', 'anim-exit-left', 'anim-enter');
+                void card.offsetWidth; // reflow
+                card.classList.add('anim-enter');
+            } catch (e) {
+                console.error(e);
+            } finally {
+                isAnimating = false;
+            }
+        };
+
+        if (exitAnim) {
+            await animateCard(exitAnim);
+        }
+        await go();
+    }
+
+    // ── Send action to server ──────────────────────────
+    async function sendAction(action) {
+        try {
+            await fetch('/Recommendation/ActionJson', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, movieId: currentMovieId, currentIndex })
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // ── Button handlers ────────────────────────────────
+    btnLike.addEventListener('click', async () => {
+        await sendAction('like');
+        showToast('👍 Liked!', 'var(--cs-yellow)');
+        await loadRec(currentIndex + 1, 'anim-exit-right');
+    });
+
+    btnDislike.addEventListener('click', async () => {
+        await sendAction('dislike');
+        showToast('👎 Disliked', 'var(--cs-pink)');
+        await loadRec(currentIndex + 1, 'anim-exit-left');
+    });
+
+    btnWatchlist.addEventListener('click', async () => {
+        const isActive = btnWatchlist.classList.contains('rec-action-active-watchlist');
+        await sendAction(isActive ? 'unwatchlist' : 'watchlist');
+        showToast(isActive ? 'Removed from watchlist' : '🔖 Added to watchlist', 'var(--cs-blue)');
+        // Reload same card to update status
+        await loadRec(currentIndex, null);
+    });
+
+    btnWatched.addEventListener('click', async () => {
+        const isActive = btnWatched.classList.contains('rec-action-active-watched');
+        await sendAction(isActive ? 'towatch' : 'watched');
+        showToast(isActive ? 'Moved to To-Watch' : '✓ Marked as watched', 'var(--cs-lime)');
+        await loadRec(currentIndex + 1, 'anim-exit-up');
+    });
+
+    btnNext.addEventListener('click', () => {
+        loadRec(currentIndex + 1, 'anim-exit-up');
+    });
+
+    // ── Initial load ───────────────────────────────────
+    loadRec(@(Model?.CurrentIndex ?? 0), null);
+
+})();
+</script>
+}

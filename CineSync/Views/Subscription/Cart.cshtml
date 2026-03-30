@@ -1,71 +1,478 @@
-﻿@model CineSync.Models.Cart?
-
+@model CineSync.Models.Cart?
 @{
     ViewData["Title"] = "My Cart";
+    var items = Model?.CartItems?.ToList() ?? new List<CineSync.Models.CartItem>();
+    var subtotal = items.Sum(i => i.Subscription?.MonthlyPrice ?? 0);
 }
 
-<div class="container mt-4" style="max-width:700px">
-    <h2>🛒 My Cart</h2>
+<div class="cs-page">
+
+    <!-- Header -->
+    <div style="margin-bottom:40px">
+        <h1 class="cs-page-title">
+            <span class="cs-highlight">MY</span> CART
+        </h1>
+    </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">@TempData["Success"]</div>
+        <div style="background:var(--cs-lime);border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;padding:16px 24px;margin-bottom:28px;font-family:'Archivo Black',sans-serif;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:#111;">
+            ✓ @TempData["Success"]
+        </div>
     }
 
-    @if (Model == null || !Model.CartItems.Any())
+    @if (!items.Any())
     {
-        <div class="alert alert-info">Your cart is empty.</div>
-        <a asp-action="Index" class="btn btn-primary">View Subscriptions</a>
+        <!-- Empty State -->
+        <div style="text-align:center;padding:80px 40px;border:3px solid #111;border-radius:14px;box-shadow:6px 6px 0 #111;background:var(--cs-surface);margin-bottom:40px;">
+            <div style="font-size:3rem;margin-bottom:16px;">🛒</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:1.6rem;text-transform:uppercase;letter-spacing:-0.02em;margin-bottom:12px;">Cart Is Empty</div>
+            <p style="color:var(--cs-muted);font-size:0.95rem;margin-bottom:28px;">Browse subscriptions and add plans to your cart.</p>
+            <a asp-action="Index"
+               style="display:inline-block;background:var(--cs-yellow);color:#111;border:3px solid #111;border-radius:8px;padding:14px 32px;font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;box-shadow:4px 4px 0 #111;text-decoration:none;">
+                Browse Subscriptions →
+            </a>
+        </div>
     }
     else
     {
-        <table class="table table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    <th>Platform</th>
-                    <th>Subscription Type</th>
-                    <th>Video Quality</th>
-                    <th>Price / Month</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.CartItems)
+        <div class="cart-layout">
+
+            <!-- LEFT: Items Table -->
+            <div class="cart-left">
+                <!-- Table Header -->
+                <div class="cart-table-header">
+                    <span>Platform</span>
+                    <span>Subscription</span>
+                    <span>Quality</span>
+                    <span>Price</span>
+                    <span></span>
+                </div>
+
+                <!-- Items -->
+                @foreach (var item in items)
                 {
-                    <tr>
-                        <td>@item.Subscription?.Platform?.Name</td>
-                        <td>@item.Subscription?.Type</td>
-                        <td>@item.Subscription?.VideoQuality</td>
-                        <td>@item.Subscription?.MonthlyPrice lei</td>
-                        <td>
+                    <div class="cart-row">
+                        <!-- Platform icon + name -->
+                        <div class="cart-platform">
+                            <div class="cart-platform-icon">
+                                @(item.Subscription?.Platform?.Name?.Substring(0,1).ToUpper() ?? "?")
+                            </div>
+                            <span class="cart-platform-name">
+                                @item.Subscription?.Platform?.Name?.ToUpper()
+                            </span>
+                        </div>
+
+                        <!-- Type badge -->
+                        <div>
+                            <span class="cart-type-badge">@item.Subscription?.Type?.ToUpper()</span>
+                        </div>
+
+                        <!-- Quality -->
+                        <div class="cart-quality">
+                            @item.Subscription?.VideoQuality?.ToUpper()
+                        </div>
+
+                        <!-- Price -->
+                        <div class="cart-price">
+                            @item.Subscription?.MonthlyPrice.ToString("0.00") RON
+                        </div>
+
+                        <!-- Remove -->
+                        <div>
                             <form asp-action="RemoveFromCart" method="post">
                                 <input type="hidden" name="cartItemId" value="@item.CartItemId" />
-                                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                <button type="submit" class="cart-remove-btn"
+                                        onclick="return confirm('Remove this item?')">
+                                    🗑
+                                </button>
                             </form>
-                        </td>
-                    </tr>
+                        </div>
+                    </div>
                 }
-            </tbody>
+            </div>
 
-            <tfoot>
-                <tr class="table-light fw-bold">
-                    <td colspan="3">Total Monthly Cost:</td>
-                    <td colspan="2">
-                        @Model.CartItems.Sum(ci => ci.Subscription?.MonthlyPrice ?? 0) lei
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
+            <!-- RIGHT: Summary -->
+            <div class="cart-summary-panel">
+                <div class="cart-summary-title">Total Monthly Cost</div>
 
-        <form asp-action="Checkout" method="post">
-            <button type="submit" class="btn btn-success"
-                    onclick="return confirm('Confirm your order?')">
-                Checkout
-            </button>
+                <div class="cart-summary-rows">
+                    <div class="cart-summary-row">
+                        <span>Subtotal:</span>
+                        <span>@subtotal.ToString("0.00") RON</span>
+                    </div>
+                    <div class="cart-summary-row">
+                        <span>Tax:</span>
+                        <span>0.00 RON</span>
+                    </div>
+                </div>
 
-            <a asp-action="Index" class="btn btn-secondary ms-2">
-                Continue Shopping
-            </a>
-        </form>
+                <div class="cart-grand-total">
+                    <span class="cart-grand-label">Grand<br/>Total</span>
+                    <span class="cart-grand-amount">@subtotal.ToString("0.00") RON</span>
+                </div>
+
+                <form asp-action="Checkout" method="post">
+                    <button type="submit" class="cart-checkout-btn"
+                            onclick="return confirm('Confirm checkout?')">
+                        Checkout Now →
+                    </button>
+                </form>
+
+                <a asp-action="Index" class="cart-continue-btn">
+                    Continue Shopping
+                </a>
+
+                <p class="cart-disclaimer">
+                    *Subscriptions are billed monthly. Cancel anytime without fees.
+                    CineSync aggregates your payments into one simple transaction.
+                </p>
+            </div>
+        </div>
+
+        <!-- Complete Your Bundle -->
+        <div style="margin-top:64px">
+            <h2 style="font-family:'Archivo Black',sans-serif;font-size:clamp(1.6rem,3vw,2.2rem);text-transform:uppercase;letter-spacing:-0.03em;margin-bottom:28px;border-bottom:3px solid #111;padding-bottom:16px;">
+                <span style="background:var(--cs-yellow);padding:0 8px;">Complete</span> Your Bundle
+            </h2>
+
+            @{
+                var suggested = ViewBag.SuggestedSubs as IEnumerable<CineSync.Models.Subscription>;
+            }
+
+            @if (suggested != null && suggested.Any())
+            {
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+                    @foreach (var s in suggested.Take(3))
+                    {
+                        <div class="bundle-card">
+                            <div class="bundle-icon">+</div>
+                            <div class="bundle-name">@s.Platform?.Name?.ToUpper()</div>
+                            <div class="bundle-desc">@s.Type.ToUpper() · @s.VideoQuality · @s.MonthlyPrice.ToString("0.00") RON/MO</div>
+                            <form asp-action="AddToCart" method="post">
+                                <input type="hidden" name="subscriptionId" value="@s.SubscriptionId" />
+                                <button type="submit" class="bundle-add-btn">Add to Cart</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="color:var(--cs-muted);font-family:'Archivo Black',sans-serif;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;">
+                    All available subscriptions are already in your cart.
+                </p>
+            }
+        </div>
     }
 </div>
+
+<style>
+    .cart-layout {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 28px;
+        align-items: start;
+    }
+
+    @@media (max-width: 900px) {
+        .cart-layout { grid-template-columns: 1fr; }
+    }
+
+    .cart-left {
+        border: 3px solid #111;
+        border-radius: 12px;
+        box-shadow: 5px 5px 0 #111;
+        overflow: hidden;
+        background: var(--cs-surface);
+    }
+
+    .cart-table-header {
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr 1.2fr 0.5fr;
+        gap: 12px;
+        background: #111;
+        color: #fff;
+        padding: 14px 20px;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .cart-row {
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr 1.2fr 0.5fr;
+        gap: 12px;
+        align-items: center;
+        padding: 18px 20px;
+        border-bottom: 2px solid #111;
+        transition: background 0.12s;
+    }
+
+    .cart-row:last-child { border-bottom: none; }
+    .cart-row:hover { background: var(--cs-surface-2); }
+
+    .cart-platform {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .cart-platform-icon {
+        width: 40px;
+        height: 40px;
+        background: #111;
+        color: #fff;
+        border: 2px solid #111;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .cart-platform-name {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        color: var(--cs-text);
+    }
+
+    .cart-type-badge {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: var(--cs-yellow);
+        color: #000;
+        border: 2px solid #111;
+        border-radius: 4px;
+        padding: 4px 8px;
+        box-shadow: 2px 2px 0 #111;
+        white-space: nowrap;
+    }
+
+    .cart-quality {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--cs-text);
+    }
+
+    .cart-price {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        letter-spacing: -0.02em;
+        color: var(--cs-text);
+    }
+
+    .cart-remove-btn {
+        background: #ff5c5c;
+        color: #fff;
+        border: 2px solid #111;
+        border-radius: 6px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+        font-size: 0.85rem;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .cart-remove-btn:hover {
+        transform: translate(-1px,-1px);
+        box-shadow: 4px 4px 0 #111;
+    }
+
+    .cart-summary-panel {
+        border: 3px solid #111;
+        border-radius: 12px;
+        box-shadow: 6px 6px 0 #111;
+        background: var(--cs-surface);
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .cart-summary-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        color: var(--cs-text);
+        padding-bottom: 16px;
+        border-bottom: 2px solid #111;
+    }
+
+    .cart-summary-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .cart-summary-row {
+        display: flex;
+        justify-content: space-between;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--cs-text);
+    }
+
+    .cart-grand-total {
+        background: var(--cs-pink);
+        border: 3px solid #111;
+        border-radius: 8px;
+        box-shadow: 4px 4px 0 #111;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cart-grand-label {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #111;
+        line-height: 1.3;
+    }
+
+    .cart-grand-amount {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1.6rem;
+        letter-spacing: -0.04em;
+        color: #111;
+    }
+
+    .cart-checkout-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: var(--cs-lime);
+        color: #000;
+        border: 3px solid #111;
+        border-radius: 8px;
+        padding: 16px;
+        cursor: pointer;
+        box-shadow: 4px 4px 0 #111;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .cart-checkout-btn:hover {
+        transform: translate(-2px,-2px);
+        box-shadow: 6px 6px 0 #111;
+    }
+
+    .cart-continue-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: var(--cs-surface);
+        color: var(--cs-text);
+        border: 3px solid #111;
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 4px 4px 0 #111;
+        text-decoration: none;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .cart-continue-btn:hover {
+        transform: translate(-2px,-2px);
+        box-shadow: 6px 6px 0 #111;
+        color: var(--cs-text);
+    }
+
+    .cart-disclaimer {
+        font-size: 0.72rem;
+        color: var(--cs-muted);
+        line-height: 1.5;
+        border-top: 2px solid var(--cs-surface-2);
+        padding-top: 16px;
+    }
+
+    .bundle-card {
+        background: var(--cs-yellow);
+        border: 3px solid #111;
+        border-radius: 10px;
+        box-shadow: 4px 4px 0 #111;
+        padding: 24px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .bundle-card:hover {
+        transform: translate(-2px,-2px);
+        box-shadow: 6px 6px 0 #111;
+    }
+
+    .bundle-icon {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1.4rem;
+        color: #111;
+    }
+
+    .bundle-name {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        color: #111;
+    }
+
+    .bundle-desc {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #333;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .bundle-add-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: #111;
+        color: #fff;
+        border: 3px solid #111;
+        border-radius: 6px;
+        padding: 12px;
+        cursor: pointer;
+        box-shadow: 3px 3px 0 #555;
+        margin-top: auto;
+        transition: background 0.12s, transform 0.12s;
+    }
+
+    .bundle-add-btn:hover {
+        background: var(--cs-lime);
+        color: #000;
+        transform: translate(-2px,-2px);
+    }
+</style>

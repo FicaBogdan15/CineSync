@@ -119,5 +119,87 @@ namespace CineSync.Controllers
         {
             return RedirectToAction("Index", new { index = currentIndex + 1 });
         }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetRecommendation(int currentIndex = 0)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var queue = await _recommendationService.GetRecommendationQueueAsync(userId, 20);
+            var list = queue.ToList();
+
+            if (!list.Any())
+                return Json(new { empty = true });
+
+            currentIndex = Math.Clamp(currentIndex, 0, list.Count - 1);
+            var movie = list[currentIndex];
+
+            var avgRating = movie.Reviews != null && movie.Reviews.Any()
+                ? Math.Round(movie.Reviews.Average(r => r.Rating), 1)
+                : (double?)null;
+
+            var reaction = await _recommendationService.GetReactionAsync(userId, movie.MovieId);
+            var isInWatchList = await _recommendationService.IsMovieInWatchListAsync(userId, movie.MovieId);
+            var isWatched = await _recommendationService.IsMovieWatchedAsync(userId, movie.MovieId);
+
+            return Json(new
+            {
+                empty = false,
+                currentIndex,
+                total = list.Count,
+                movieId = movie.MovieId,
+                title = movie.Title,
+                year = movie.Year,
+                description = movie.Description,
+                posterPath = movie.PosterPath,
+                pdfPath = movie.PdfPath,
+                categoryName = movie.Category?.Name,
+                directorName = movie.Director?.Name,
+                avgRating,
+                reviewCount = movie.Reviews?.Count ?? 0,
+                userReaction = reaction?.IsLiked,
+                isInWatchList,
+                isWatched,
+                reason = currentIndex < 5 ? "Top rated globally" : "Based on your preferences"
+            });
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> ActionJson([FromBody] RecommendationActionRequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            switch ((request.Action ?? string.Empty).ToLowerInvariant())
+            {
+                case "like":
+                    await _recommendationService.SaveReactionAsync(userId, request.MovieId, true);
+                    break;
+                case "dislike":
+                    await _recommendationService.SaveReactionAsync(userId, request.MovieId, false);
+                    break;
+                case "watchlist":
+                    await _recommendationService.AddToWatchListAsync(userId, request.MovieId);
+                    break;
+                case "unwatchlist":
+                    await _recommendationService.RemoveFromWatchListAsync(userId, request.MovieId);
+                    break;
+                case "watched":
+                    await _recommendationService.MarkAsWatchedAsync(userId, request.MovieId);
+                    break;
+                case "towatch":
+                    await _recommendationService.MarkAsToWatchAsync(userId, request.MovieId);
+                    break;
+            }
+
+            return Json(new { ok = true });
+        }
+
+        public class RecommendationActionRequest
+        {
+            public string? Action { get; set; }
+            public int MovieId { get; set; }
+            public int CurrentIndex { get; set; }
+        }
     }
 }

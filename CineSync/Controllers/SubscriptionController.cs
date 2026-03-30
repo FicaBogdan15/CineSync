@@ -49,6 +49,12 @@ namespace CineSync.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var cart = await _service.GetCartAsync(userId);
+
+            var cartIds = cart?.CartItems?.Select(i => i.SubscriptionId).ToHashSet()
+                          ?? new HashSet<int>();
+            var allSubs = await _service.GetSubscriptionsAsync(null, null);
+            ViewBag.SuggestedSubs = allSubs.Where(s => !cartIds.Contains(s.SubscriptionId)).Take(3);
+
             return View(cart);
         }
 

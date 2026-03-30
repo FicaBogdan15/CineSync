@@ -1,57 +1,153 @@
-﻿@model IEnumerable<CineSync.Models.Subscription>
+@model IEnumerable<CineSync.Models.Subscription>
 @{
-    ViewData["Title"] = "Administrare Abonamente";
+    ViewData["Title"] = "Manage Subscriptions";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var subList = Model.ToList();
+    var total = subList.Sum(s => s.MonthlyPrice);
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Administrare Abonamente</h2>
-        <a asp-controller="Subscription" asp-action="Create" class="btn btn-success">+ Abonament nou</a>
+<div class="cs-page">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:40px;gap:20px;flex-wrap:wrap;">
+        <div style="background:var(--cs-yellow);border:3px solid #111;border-radius:10px;box-shadow:6px 6px 0 #111;padding:12px 32px;">
+            <h1 style="font-family:'Archivo Black',sans-serif;font-size:clamp(1.6rem,3vw,2.4rem);text-transform:uppercase;letter-spacing:-0.03em;color:#111;margin:0;">
+                Manage Subscriptions
+            </h1>
+        </div>
+        <a asp-action="Create"
+           style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-blue);color:#000;border:3px solid #111;border-radius:8px;padding:12px 24px;box-shadow:4px 4px 0 #111;text-decoration:none;white-space:nowrap;display:inline-block;transition:transform 0.12s,box-shadow 0.12s;">
+            + Add Subscription
+        </a>
     </div>
 
-    @if (!Model.Any())
+    @if (!subList.Any())
     {
-        <div class="alert alert-info">Nu există abonamente încă.</div>
+        <div style="text-align:center;padding:80px 40px;border:3px solid #111;border-radius:14px;box-shadow:6px 6px 0 #111;background:var(--cs-surface);">
+            <div style="font-size:3rem;margin-bottom:16px;">📺</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:1.4rem;text-transform:uppercase;">No Subscriptions Yet</div>
+        </div>
     }
     else
     {
-        <table class="table table-striped shadow-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>Platformă</th>
-                    <th>Tip</th>
-                    <th>Preț/lună</th>
-                    <th>Calitate</th>
-                    <th>Acțiuni</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var sub in Model)
-                {
-                    <tr>
-                        <td>@sub.Platform?.Name</td>
-                        <td>@sub.Type</td>
-                        <td>@sub.MonthlyPrice lei</td>
-                        <td>@sub.VideoQuality</td>
-                        <td>
-                            <a asp-controller="Subscription" asp-action="Edit"
-                               asp-route-id="@sub.SubscriptionId"
-                               class="btn btn-sm btn-warning">Editează</a>
-                            <form asp-controller="Subscription" asp-action="Delete"
-                                  asp-route-id="@sub.SubscriptionId"
-                                  method="post" class="d-inline"
-                                  onsubmit="return confirm('Ștergi abonamentul?')">
-                                <button type="submit" class="btn btn-sm btn-danger">Șterge</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <!-- Table -->
+        <div style="border:3px solid #111;border-radius:12px;box-shadow:5px 5px 0 #111;overflow:hidden;background:var(--cs-surface);">
+
+            <!-- Header Row -->
+            <div style="display:grid;grid-template-columns:2fr 2fr 1.2fr 1.5fr 1.5fr;gap:16px;background:#111;color:#fff;padding:16px 24px;">
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;">Platform</span>
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;">Type</span>
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;">Price/Mo</span>
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;">Quality</span>
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;">Actions</span>
+            </div>
+
+            <!-- Data Rows -->
+            @foreach (var sub in subList)
+            {
+                <div style="display:grid;grid-template-columns:2fr 2fr 1.2fr 1.5fr 1.5fr;gap:16px;align-items:center;padding:18px 24px;border-bottom:2px solid #111;background:var(--cs-surface);transition:background 0.12s;"
+                     onmouseover="this.style.background='var(--cs-surface-2)'"
+                     onmouseout="this.style.background='var(--cs-surface)'">
+
+                    <!-- Platform -->
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:44px;height:44px;background:@GetPlatformColor(sub.Platform?.Name);border:2px solid #111;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <span style="font-family:'Archivo Black',sans-serif;font-size:1rem;color:#fff;">
+                                @(sub.Platform?.Name?.Substring(0,1).ToUpper() ?? "?")
+                            </span>
+                        </div>
+                        <span style="font-family:'Archivo Black',sans-serif;font-size:0.9rem;text-transform:uppercase;letter-spacing:-0.01em;color:var(--cs-text);">
+                            @(sub.Platform?.Name ?? "—")
+                        </span>
+                    </div>
+
+                    <!-- Type -->
+                    <div style="font-family:'Archivo Black',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--cs-muted);">
+                        @sub.Type.ToUpper()
+                    </div>
+
+                    <!-- Price -->
+                    <div style="font-family:'Archivo Black',sans-serif;font-size:1rem;letter-spacing:-0.02em;color:var(--cs-text);">
+                        @sub.MonthlyPrice.ToString("0.00") RON
+                    </div>
+
+                    <!-- Quality -->
+                    <div>
+                        <span style="font-family:'Archivo Black',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;background:@GetQualityColor(sub.VideoQuality);color:#000;border:2px solid #111;border-radius:6px;padding:5px 12px;box-shadow:2px 2px 0 #111;display:inline-block;">
+                            @(sub.VideoQuality?.ToUpper() ?? "—")
+                        </span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <a asp-action="Edit" asp-route-id="@sub.SubscriptionId"
+                           style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-yellow);color:#000;border:2px solid #111;border-radius:6px;padding:8px 14px;box-shadow:3px 3px 0 #111;text-decoration:none;display:inline-block;">
+                            Edit
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@sub.SubscriptionId"
+                              method="post" style="display:inline;"
+                              onsubmit="return confirm('Delete this subscription?')">
+                            <button type="submit"
+                                    style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;background:#ff5c5c;color:#fff;border:2px solid #111;border-radius:6px;padding:8px 14px;box-shadow:3px 3px 0 #111;cursor:pointer;">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Summary Footer -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:28px;">
+
+            <!-- Total -->
+            <div style="background:#111;border:3px solid #111;border-radius:10px;box-shadow:5px 5px 0 var(--cs-yellow);padding:24px 28px;">
+                <div style="font-family:'Archivo Black',sans-serif;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cs-yellow);margin-bottom:8px;">
+                    Total Monthly Cost
+                </div>
+                <div style="font-family:'Archivo Black',sans-serif;font-size:2.2rem;letter-spacing:-0.04em;color:var(--cs-yellow);">
+                    @total.ToString("0.00") RON
+                </div>
+            </div>
+
+            <!-- Active Plans -->
+            <div style="background:var(--cs-blue);border:3px solid #111;border-radius:10px;box-shadow:5px 5px 0 #111;padding:24px 28px;">
+                <div style="font-family:'Archivo Black',sans-serif;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:#000;margin-bottom:8px;opacity:0.7;">
+                    Active Plans
+                </div>
+                <div style="font-family:'Archivo Black',sans-serif;font-size:3rem;letter-spacing:-0.06em;color:#000;">
+                    @subList.Count.ToString("D2")
+                </div>
+            </div>
+
+            <!-- Back -->
+            <div style="display:flex;align-items:center;justify-content:flex-end;">
+                <a asp-action="Index"
+                   style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-surface);color:var(--cs-text);border:3px solid #111;border-radius:8px;padding:14px 24px;box-shadow:4px 4px 0 #111;text-decoration:none;display:inline-block;">
+                    ← Back
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetPlatformColor(string? name)
+    {
+        var n = name?.ToLower();
+        if (n != null && n.Contains("netflix")) return "#e50914";
+        if (n != null && n.Contains("hbo")) return "#0073e6";
+        if (n != null && n.Contains("disney")) return "#113ccf";
+        if (n != null && n.Contains("apple")) return "#555555";
+        if (n != null && (n.Contains("amazon") || n.Contains("prime"))) return "#00a8e0";
+        return "#333333";
     }
 
-    <a asp-controller="Subscription" asp-action="Index" class="btn btn-secondary mt-2">
-        ← Înapoi la abonamente
-    </a>
-</div>
+    string GetQualityColor(string? quality)
+    {
+        var q = quality?.ToUpper();
+        if (q != null && q.Contains("4K")) return "#ff90e8";
+        if (q != null && (q.Contains("1080") || q.Contains("HD"))) return "#7dd3fc";
+        return "var(--cs-surface-2)";
+    }
+}

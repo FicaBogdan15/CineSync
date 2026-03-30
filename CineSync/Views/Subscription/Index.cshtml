@@ -1,119 +1,521 @@
-﻿@model IEnumerable<CineSync.Models.Subscription>
+@model IEnumerable<CineSync.Models.Subscription>
 @{
     ViewData["Title"] = "Subscriptions";
     var searchResults = ViewBag.SearchResults as List<(CineSync.Models.Subscription Subscription, double Score)>;
+    var hasSearch = !string.IsNullOrEmpty(ViewBag.Search as string);
+    var totalMonthly = Model.Sum(s => s.MonthlyPrice);
 }
 
-<div class="cs-max-1400">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Available Subscriptions</h2>
-        <div class="d-flex gap-2">
-            @if (User.IsInRole("Admin"))
-            {
-                <a asp-action="Manage" class="btn cs-btn cs-btn-dislike">Manage</a>
-            }
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <a asp-action="Cart" class="btn cs-btn cs-btn-neutral">My Cart</a>
-            }
-        </div>
+<div class="cs-page">
+    @* Header *@
+    <div class="cs-page-header" style="margin-bottom:32px">
+        <h1 class="cs-page-title">
+            <span class="cs-highlight">SUB</span>SCRIPTIONS
+        </h1>
+        <p class="cs-page-subtitle">
+            Centralize your streaming empire. Compare, manage, and optimize your monthly viewing costs.
+        </p>
     </div>
 
-    <form asp-action="Index" method="get" class="mb-4">
-        <div class="row g-3 align-items-center cs-panel">
-            <div class="col-md-5">
-                <div class="input-group">
-                    <span class="input-group-text">Search</span>
-                    <input type="text" name="search" value="@ViewBag.Search"
-                           class="form-control" placeholder="Search by platform, type, quality..." />
+    @* Admin button *@
+    @if (User.IsInRole("Admin"))
+    {
+        <div style="margin-bottom:28px">
+            <a asp-action="Manage" class="cs-admin-btn">⚙ Manage Subscriptions</a>
+        </div>
+    }
+
+    @* Search Bar *@
+    <form asp-action="Index" method="get">
+        <div style="border:3px solid #111;border-radius:10px;box-shadow:6px 6px 0 #111;overflow:hidden;background:var(--cs-surface);margin-bottom:40px;padding:24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="display:grid;grid-template-columns:1fr 200px 200px;gap:16px;align-items:end;">
+                <div>
+                    <div class="sub-filter-label">Search Platforms</div>
+                    <div style="border:3px solid #111;border-radius:8px;overflow:hidden;box-shadow:3px 3px 0 #111;display:flex;align-items:center;background:var(--cs-surface);">
+                        <input type="text" name="search" value="@ViewBag.Search"
+                               style="flex:1;border:none;padding:14px 18px;font-family:Inter,sans-serif;font-size:0.95rem;background:transparent;color:var(--cs-text);outline:none;text-transform:uppercase;letter-spacing:0.04em;"
+                               placeholder="NETFLIX, HBO, CRUNCHYROLL..." />
+                        <span style="padding:0 16px;font-size:1.1rem;">🔍</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="sub-filter-label">Platform</div>
+                    <select name="platformId"
+                            style="width:100%;border:3px solid #111;border-radius:8px;padding:14px 16px;font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-surface);color:var(--cs-text);box-shadow:3px 3px 0 #111;outline:none;cursor:pointer;">
+                        <option value="">All Platforms</option>
+                        @foreach (var p in (IEnumerable<CineSync.Models.Platform>)ViewBag.Platforms)
+                        {
+                            <option value="@p.PlatformId"
+                                    selected="@(ViewBag.SelectedPlatform?.ToString() == p.PlatformId.ToString() ? "selected" : null)">
+                                @p.Name.ToUpper()
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <div class="sub-filter-label">Sort By</div>
+                    <select name="sortBy"
+                            style="width:100%;border:3px solid #111;border-radius:8px;padding:14px 16px;font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-surface);color:var(--cs-text);box-shadow:3px 3px 0 #111;outline:none;cursor:pointer;">
+                        <option value="">Default</option>
+                        <option value="price_asc" selected="@(ViewBag.SortBy == "price_asc" ? "selected" : null)">Price: Low-High</option>
+                        <option value="price_desc" selected="@(ViewBag.SortBy == "price_desc" ? "selected" : null)">Price: High-Low</option>
+                    </select>
                 </div>
             </div>
-            <div class="col-md-3">
-                <select name="platformId" class="form-select">
-                    <option value="">All Platforms</option>
-                    @foreach (var p in (IEnumerable<CineSync.Models.Platform>)ViewBag.Platforms)
-                    {
-                        <option value="@p.PlatformId"
-                                selected="@(ViewBag.SelectedPlatform == p.PlatformId ? "selected" : null)">
-                            @p.Name
-                        </option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <select name="sortBy" class="form-select">
-                    <option value="">Default order</option>
-                    <option value="price_asc" selected="@(ViewBag.SortBy == "price_asc" ? "selected" : null)">
-                        Price ↑
-                    </option>
-                    <option value="price_desc" selected="@(ViewBag.SortBy == "price_desc" ? "selected" : null)">
-                        Price ↓
-                    </option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn cs-btn cs-btn-blue w-100">Search</button>
+            <div>
+                <button type="submit"
+                        style="background:#111;color:#fff;border:3px solid #111;border-radius:8px;padding:14px 32px;font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;box-shadow:4px 4px 0 #555;display:inline-flex;align-items:center;gap:8px;transition:transform 0.12s,box-shadow 0.12s;">
+                    APPLY ▼
+                </button>
+                @if (hasSearch)
+                {
+                    <a asp-action="Index"
+                       style="margin-left:12px;background:var(--cs-surface);color:var(--cs-text);border:3px solid #111;border-radius:8px;padding:14px 24px;font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;text-decoration:none;box-shadow:4px 4px 0 #111;display:inline-block;">
+                        ✕ Clear
+                    </a>
+                }
             </div>
         </div>
-        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
-        {
-            <div class="mt-2">
-                <a asp-action="Index" class="btn cs-btn cs-btn-neutral">Clear</a>
-                <span class="cs-muted ms-2 small">
-                    Results for "<strong>@ViewBag.Search</strong>"
-                    — @Model.Count() found
-                </span>
-            </div>
-        }
     </form>
 
+    @* Cards Grid *@
     @if (!Model.Any())
     {
-        <div class="alert alert-info">No subscriptions found.</div>
+        <div class="cs-empty">
+            <div class="cs-empty-icon">📺</div>
+            <div class="cs-empty-title">No Subscriptions Found</div>
+            <p class="cs-empty-text">Try adjusting your search or filters.</p>
+        </div>
     }
     else
     {
-        @foreach (var group in Model.GroupBy(s => s.Platform?.Name))
-        {
-            <h4 class="mt-4 mb-3">@group.Key</h4>
-            <div class="cs-grid-movies">
-                @foreach (var sub in group)
-                {
-                    double? score = searchResults?.FirstOrDefault(r => r.Subscription.SubscriptionId == sub.SubscriptionId).Score;
+        <div class="sub-grid">
+            @foreach (var sub in Model)
+            {
+                double? score = searchResults?
+                    .FirstOrDefault(r => r.Subscription.SubscriptionId == sub.SubscriptionId).Score;
 
-                    <div>
-                        <div class="cs-card movie-card p-4 h-100">
-                                <h5 class="card-title">@sub.Type</h5>
-                                <p class="fw-bold fs-5 mb-1">@sub.MonthlyPrice RON/mo</p>
-                                <p class="cs-muted small mb-2">Quality: @sub.VideoQuality</p>
-                                @if (score.HasValue)
-                                {
-                                    <span class="cs-badge cs-badge-watched">
-                                        Relevance @score.Value.ToString("F3")
-                                    </span>
-                                }
-                            <div class="d-flex flex-column gap-2 pt-4">
-                                <a asp-action="Details" asp-route-id="@sub.SubscriptionId"
-                                   class="btn cs-btn cs-btn-blue w-100">View Details</a>
-                                @if (User.Identity?.IsAuthenticated == true)
-                                {
-                                    <form asp-action="AddToCart" method="post">
-                                        <input type="hidden" name="subscriptionId" value="@sub.SubscriptionId" />
-                                        <button type="submit" class="btn cs-btn cs-btn-watchlist w-100">
-                                            Add to Cart
-                                        </button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <a asp-area="Identity" asp-page="/Account/Login"
-                                       class="btn cs-btn cs-btn-neutral w-100">Login to subscribe</a>
-                                }
+                <div class="sub-card">
+                    @* Status badge *@
+                    <div class="sub-status-badge sub-status-active">ACTIVE</div>
+
+                    @* Platform header *@
+                    <div class="sub-card-header">
+                        <div class="sub-platform-name">@sub.Platform?.Name?.ToUpper()</div>
+                    </div>
+
+                    @* Price row *@
+                    <div class="sub-card-body">
+                        <div class="sub-plan-row">
+                            <div>
+                                <div class="sub-plan-name">@sub.Type.ToUpper()</div>
+                                <div class="sub-billing-label">Monthly Billing</div>
+                            </div>
+                            <div class="sub-price">
+                                <span class="sub-price-amount">@sub.MonthlyPrice.ToString("0.00")</span>
+                                <span class="sub-price-unit">RON/MO</span>
                             </div>
                         </div>
+
+                        @* Quality tags *@
+                        <div class="sub-tags">
+                            @if (!string.IsNullOrEmpty(sub.VideoQuality))
+                            {
+                                <span class="sub-tag">@sub.VideoQuality.ToUpper()</span>
+                            }
+                            @if (score.HasValue)
+                            {
+                                <span class="sub-tag sub-tag-relevance">⚡ @score.Value.ToString("F2")</span>
+                            }
+                        </div>
+
+                        @* Actions *@
+                        <div class="sub-actions">
+                            <a asp-action="Details" asp-route-id="@sub.SubscriptionId"
+                               class="sub-btn sub-btn-details">Details</a>
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <form asp-action="AddToCart" method="post" style="flex:1">
+                                    <input type="hidden" name="subscriptionId" value="@sub.SubscriptionId" />
+                                    <button type="submit" class="sub-btn sub-btn-cart">+ Add to Cart</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a asp-area="Identity" asp-page="/Account/Login"
+                                   class="sub-btn sub-btn-cart">Sign In</a>
+                            }
+                        </div>
                     </div>
+                </div>
+            }
+
+            @* Add Platform Card *@
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Create" class="sub-card sub-card-add">
+                    <div class="sub-add-icon">+</div>
+                    <div class="sub-add-title">Add Platform</div>
+                    <div class="sub-add-sub">Sync another service</div>
+                </a>
+            }
+        </div>
+
+        @* Summary Bar *@
+        <div class="sub-summary">
+            <div class="sub-summary-burn">
+                <div class="sub-summary-label">Total Monthly Burn</div>
+                <div class="sub-summary-amount">@totalMonthly.ToString("0.00") RON</div>
+            </div>
+            <div class="sub-summary-mid">
+                <div class="sub-summary-label">Plans Active</div>
+                <div class="sub-summary-count">@Model.Count() subscriptions</div>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-action="Cart" class="sub-summary-btn">🛒 View Cart</a>
                 }
             </div>
-        }
+            <div class="sub-summary-health">
+                <div class="sub-summary-label">Cart Status</div>
+                <div class="sub-summary-health-status">Ready to checkout</div>
+                <div class="sub-summary-health-desc">Review your selected subscriptions in the cart.</div>
+            </div>
+        </div>
     }
 </div>
+
+<style>
+    .sub-filter-label {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--cs-muted);
+        margin-bottom: 8px;
+    }
+
+    .sub-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    @@media (max-width: 1000px) { .sub-grid { grid-template-columns: repeat(2,1fr); } }
+    @@media (max-width: 640px)  { .sub-grid { grid-template-columns: 1fr; } }
+
+    .sub-card {
+        background: var(--cs-surface);
+        border: 3px solid #111;
+        border-radius: 12px;
+        box-shadow: 5px 5px 0 #111;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.14s, box-shadow 0.14s;
+    }
+
+    .sub-card:hover {
+        transform: translate(-3px,-3px);
+        box-shadow: 8px 8px 0 #111;
+    }
+
+    .sub-status-badge {
+        position: absolute;
+        top: 16px; right: 16px;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 4px 10px;
+        border: 2px solid #111;
+        border-radius: 4px;
+        z-index: 2;
+    }
+
+    .sub-status-active { background: var(--cs-yellow); color: #111; }
+
+    .sub-card-header {
+        background: #111;
+        padding: 32px 24px 28px;
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+    }
+
+    .sub-platform-name {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1.8rem;
+        text-transform: uppercase;
+        letter-spacing: -0.03em;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .sub-card-body {
+        padding: 20px 22px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .sub-plan-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .sub-plan-name {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        color: var(--cs-text);
+    }
+
+    .sub-billing-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--cs-muted);
+        margin-top: 4px;
+        font-weight: 700;
+    }
+
+    .sub-price {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .sub-price-amount {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1.4rem;
+        color: var(--cs-blue);
+        letter-spacing: -0.03em;
+        display: block;
+    }
+
+    .sub-price-unit {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--cs-muted);
+    }
+
+    .sub-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .sub-tag {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: var(--cs-surface-2);
+        color: var(--cs-text);
+        border: 2px solid #111;
+        border-radius: 6px;
+        padding: 4px 10px;
+        box-shadow: 2px 2px 0 #111;
+    }
+
+    .sub-tag-relevance {
+        background: var(--cs-lime);
+        color: #000;
+    }
+
+    .sub-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: auto;
+    }
+
+    .sub-btn {
+        flex: 1;
+        text-align: center;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border: 3px solid #111;
+        border-radius: 6px;
+        padding: 12px 8px;
+        cursor: pointer;
+        box-shadow: 3px 3px 0 #111;
+        text-decoration: none;
+        display: block;
+        transition: transform 0.12s, box-shadow 0.12s;
+        background: var(--cs-surface);
+        color: var(--cs-text);
+        width: 100%;
+    }
+
+    .sub-btn:hover {
+        transform: translate(-2px,-2px);
+        box-shadow: 5px 5px 0 #111;
+        color: var(--cs-text);
+    }
+
+    .sub-btn-details { background: var(--cs-surface); }
+    .sub-btn-cart { background: var(--cs-yellow); color: #000; }
+    .sub-btn-cart:hover { color: #000; }
+
+    .sub-card-add {
+        border: 3px dashed #111;
+        box-shadow: none;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 48px 24px;
+        text-decoration: none;
+        color: var(--cs-text);
+        min-height: 220px;
+        transition: background 0.15s, transform 0.14s;
+    }
+
+    .sub-card-add:hover {
+        background: var(--cs-yellow);
+        color: #111;
+        transform: translate(-3px,-3px);
+        box-shadow: 5px 5px 0 #111;
+        border-style: solid;
+    }
+
+    .sub-add-icon {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 2.5rem;
+        width: 64px; height: 64px;
+        border: 3px solid #111;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 4px 4px 0 #111;
+        background: var(--cs-yellow);
+        color: #111;
+    }
+
+    .sub-add-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        color: var(--cs-text);
+    }
+
+    .sub-add-sub {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--cs-muted);
+        font-weight: 700;
+    }
+
+    .sub-summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0;
+        border: 3px solid #111;
+        border-radius: 12px;
+        box-shadow: 6px 6px 0 #111;
+        overflow: hidden;
+        margin-top: 40px;
+    }
+
+    .sub-summary > div {
+        padding: 28px 32px;
+    }
+
+    .sub-summary-burn {
+        background: #111;
+        color: #fff;
+    }
+
+    .sub-summary-mid {
+        background: var(--cs-surface);
+        border-left: 3px solid #111;
+        border-right: 3px solid #111;
+    }
+
+    .sub-summary-health {
+        background: var(--cs-pink);
+    }
+
+    .sub-summary-label {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        opacity: 0.7;
+        margin-bottom: 8px;
+    }
+
+    .sub-summary-amount {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 2.2rem;
+        letter-spacing: -0.04em;
+        color: var(--cs-yellow);
+        line-height: 1;
+    }
+
+    .sub-summary-count {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+        color: var(--cs-text);
+        margin-bottom: 12px;
+    }
+
+    .sub-summary-btn {
+        display: inline-block;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: var(--cs-yellow);
+        color: #000;
+        border: 3px solid #111;
+        border-radius: 6px;
+        padding: 10px 20px;
+        box-shadow: 3px 3px 0 #111;
+        text-decoration: none;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .sub-summary-btn:hover {
+        transform: translate(-2px,-2px);
+        box-shadow: 5px 5px 0 #111;
+        color: #000;
+    }
+
+    .sub-summary-health-status {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1.3rem;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+        color: #111;
+        margin-bottom: 8px;
+    }
+
+    .sub-summary-health-desc {
+        font-size: 0.82rem;
+        color: #333;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    @@media (max-width: 768px) {
+        .sub-summary { grid-template-columns: 1fr; }
+        .sub-summary-mid { border-left: none; border-right: none; border-top: 3px solid #111; border-bottom: 3px solid #111; }
+    }
+</style>

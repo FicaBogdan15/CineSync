@@ -159,7 +159,7 @@ namespace CineSync.Services
                         .Where(t => t.Contains(queryTerm) && !t.StartsWith(queryTerm))
                         .Sum(t => 0.3 / doc.Terms.Count);
 
-                    //  titlu/platform direct
+                    //  title/platform direct
                     if (doc.Subscription.Platform?.Name.ToLowerInvariant().Contains(queryTerm) == true)
                         score += 2.0;
                     if (doc.Subscription.Type.ToLowerInvariant().Contains(queryTerm))

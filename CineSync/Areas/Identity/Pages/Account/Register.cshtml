@@ -1,67 +1,307 @@
-﻿@page
+@page
 @model RegisterModel
 @{
     ViewData["Title"] = "Register";
+    Layout = null;
 }
 
-<h1>@ViewData["Title"]</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - CineSync</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Inter", sans-serif;
+            background: #f5f5f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .auth-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .auth-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            max-width: 1000px;
+            border: 3px solid #111;
+            border-radius: 16px;
+            box-shadow: 10px 10px 0 #111;
+            overflow: hidden;
+            background: #fff;
+        }
+        .auth-left {
+            background: #c6f62e;
+            padding: 56px 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            min-height: 600px;
+        }
+        .auth-left::before {
+            content: "";
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: #ff90e8;
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+        .auth-left::after {
+            content: "";
+            position: absolute;
+            bottom: 40px; left: -40px;
+            width: 140px; height: 140px;
+            background: #ffd100;
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+        .auth-brand {
+            font-family: "Archivo Black", sans-serif;
+            font-size: clamp(3.5rem, 8vw, 5.5rem);
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            line-height: 0.9;
+            color: #111;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-tag {
+            display: inline-block;
+            background: #111;
+            color: #c6f62e;
+            font-family: "Archivo Black", sans-serif;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-top: 24px;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-tagline {
+            font-family: "Archivo Black", sans-serif;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+            color: #111;
+            line-height: 1.3;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-tagline span { background: #ffd100; padding: 0 4px; }
+        .auth-right {
+            padding: 48px 48px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 22px;
+        }
+        .auth-title {
+            font-family: "Archivo Black", sans-serif;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: -0.03em;
+            color: #111;
+        }
+        .auth-title-underline {
+            width: 48px; height: 4px;
+            background: #c6f62e;
+            border-radius: 2px;
+            margin-top: 8px;
+        }
+        .auth-form { display: flex; flex-direction: column; gap: 18px; }
+        .auth-field { display: flex; flex-direction: column; gap: 6px; }
+        .auth-label {
+            font-family: "Archivo Black", sans-serif;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #111;
+        }
+        .auth-input {
+            border: 3px solid #111;
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-family: "Inter", sans-serif;
+            font-size: 1rem;
+            color: #111;
+            background: #fff;
+            box-shadow: 3px 3px 0 #111;
+            outline: none;
+            transition: box-shadow 0.12s, transform 0.12s;
+            width: 100%;
+        }
+        .auth-input::placeholder { color: #aaa; }
+        .auth-input:focus {
+            box-shadow: 5px 5px 0 #111;
+            transform: translate(-1px, -1px);
+        }
+        .auth-validation { color: #ff5c5c; font-size: 0.82rem; font-weight: 700; }
+        .auth-btn {
+            border: 3px solid #111;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: "Archivo Black", sans-serif;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            box-shadow: 4px 4px 0 #111;
+            transition: transform 0.12s, box-shadow 0.12s;
+        }
+        .auth-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #111;
+        }
+        .auth-btn-primary { background: #c6f62e; color: #111; }
+        .auth-btn-login { background: #ffd100; color: #111; }
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .auth-divider::before, .auth-divider::after {
+            content: "";
+            flex: 1;
+            height: 2px;
+            background: #111;
+        }
+        .auth-divider-text {
+            font-family: "Archivo Black", sans-serif;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+        }
+        .auth-footer {
+            border-top: 3px solid #111;
+            background: #111;
+            color: #fff;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .auth-footer-copy {
+            font-family: "Archivo Black", sans-serif;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #888;
+        }
+        .auth-footer-links { display: flex; gap: 24px; }
+        .auth-footer-link {
+            font-family: "Archivo Black", sans-serif;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #888;
+            text-decoration: none;
+        }
+        .auth-footer-link:hover { color: #fff; }
+        @@media (max-width: 700px) {
+            .auth-card { grid-template-columns: 1fr; }
+            .auth-left { min-height: 220px; padding: 36px 32px; }
+            .auth-right { padding: 36px 32px; }
+        }
+    </style>
+</head>
+<body>
 
-<div class="row">
-    <div class="col-md-4">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
-            <hr />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label asp-for="Input.Email">Email</label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-left">
+            <div>
+                <div class="auth-brand">CINE<br />SYNC</div>
+                <div class="auth-tag">Join the Collective</div>
             </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.Password">Password</label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            <div class="auth-tagline">
+                Start your<br />
+                <span>cinematic</span> journey.
             </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        <div class="auth-right">
+            <div>
+                <div class="auth-title">Create Account</div>
+                <div class="auth-title-underline"></div>
             </div>
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
-                    </form>
-                }
-            }
-        </section>
+
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
+                <div asp-validation-summary="ModelOnly" class="auth-validation"></div>
+
+                <div class="auth-field">
+                    <label asp-for="Input.Email" class="auth-label">Email Address</label>
+                    <input asp-for="Input.Email"
+                           class="auth-input"
+                           autocomplete="username"
+                           placeholder="your@email.com" />
+                    <span asp-validation-for="Input.Email" class="auth-validation"></span>
+                </div>
+
+                <div class="auth-field">
+                    <label asp-for="Input.Password" class="auth-label">Password</label>
+                    <input asp-for="Input.Password"
+                           class="auth-input"
+                           autocomplete="new-password"
+                           placeholder="Min. 6 characters" />
+                    <span asp-validation-for="Input.Password" class="auth-validation"></span>
+                </div>
+
+                <div class="auth-field">
+                    <label asp-for="Input.ConfirmPassword" class="auth-label">Confirm Password</label>
+                    <input asp-for="Input.ConfirmPassword"
+                           class="auth-input"
+                           autocomplete="new-password"
+                           placeholder="Repeat password" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="auth-validation"></span>
+                </div>
+
+                <button type="submit" class="auth-btn auth-btn-primary">Create Account</button>
+
+                <div class="auth-divider">
+                    <span class="auth-divider-text">already have an account?</span>
+                </div>
+
+                <a asp-page="./Login"
+                   asp-route-returnUrl="@Model.ReturnUrl"
+                   class="auth-btn auth-btn-login">Sign In</a>
+            </form>
+        </div>
     </div>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<footer class="auth-footer">
+    <span class="auth-footer-copy">&copy; 2026 CineSync Kinetic Brutalism</span>
+    <div class="auth-footer-links">
+        <a href="#" class="auth-footer-link">Privacy</a>
+        <a href="#" class="auth-footer-link">Terms</a>
+        <a href="#" class="auth-footer-link">Contact</a>
+    </div>
+</footer>
+
+<partial name="_ValidationScriptsPartial" />
+</body>
+</html>

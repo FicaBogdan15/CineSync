@@ -341,19 +341,76 @@ namespace CineSync.Services
             double score = 0;
 
             if (lowerTitle == query)
-                score += 100;
+                return 200;
 
             if (lowerTitle.StartsWith(query))
-                score += 50;
+                score += 80;
 
             if (lowerTitle.Contains(query))
-                score += 20;
+                score += 40;
 
             var words = lowerTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (words.Any(w => w.StartsWith(query)))
-                score += 10;
+            foreach (var word in words)
+            {
+                if (word.StartsWith(query))
+                    score += 20;
+                else if (word.Contains(query))
+                    score += 10;
+            }
+
+            int distFull = LevenshteinDistance(query, lowerTitle);
+            int maxDist = Math.Max(1, (int)Math.Ceiling(query.Length * 0.4));
+            if (distFull <= maxDist)
+                score += Math.Max(0, (maxDist - distFull + 1) * 5.0);
+
+            foreach (var word in words)
+            {
+                if (word.Length < query.Length - 2)
+                    continue;
+
+                int distWord = LevenshteinDistance(query, word);
+                int maxDistWord = Math.Max(1, (int)Math.Ceiling(query.Length * 0.35));
+                if (distWord <= maxDistWord)
+                    score += Math.Max(0, (maxDistWord - distWord + 1) * 8.0);
+            }
 
             return score;
+        }
+
+        private int LevenshteinDistance(string a, string b)
+        {
+            if (string.IsNullOrEmpty(a))
+                return b?.Length ?? 0;
+
+            if (string.IsNullOrEmpty(b))
+                return a.Length;
+
+            int m = a.Length;
+            int n = b.Length;
+
+            var prev = new int[n + 1];
+            var curr = new int[n + 1];
+
+            for (int j = 0; j <= n; j++)
+                prev[j] = j;
+
+            for (int i = 1; i <= m; i++)
+            {
+                curr[0] = i;
+
+                for (int j = 1; j <= n; j++)
+                {
+                    int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                    curr[j] = Math.Min(
+                        Math.Min(curr[j - 1] + 1, prev[j] + 1),
+                        prev[j - 1] + cost
+                    );
+                }
+
+                Array.Copy(curr, prev, n + 1);
+            }
+
+            return prev[n];
         }
 
         private Dictionary<string, double> BuildTfidfVector(
@@ -420,10 +477,6 @@ namespace CineSync.Services
                 await _context.SaveChangesAsync();
             }
         }
-
-        // =========================
-        // REVIEWS
-        // =========================
 
         public async Task AddReviewAsync(Review review)
         {
