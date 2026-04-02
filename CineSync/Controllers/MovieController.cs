@@ -33,7 +33,7 @@ namespace CineSync.Controllers
             ViewBag.Search = search;
             ViewBag.PageSize = pageSize;
 
-            IEnumerable<Movie> movies;
+            IEnumerable<Movie> movies;  
             int totalResults;
             int totalPages;
 

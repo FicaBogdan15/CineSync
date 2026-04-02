@@ -3,7 +3,7 @@
     ViewData["Title"] = "Subscriptions";
     var searchResults = ViewBag.SearchResults as List<(CineSync.Models.Subscription Subscription, double Score)>;
     var hasSearch = !string.IsNullOrEmpty(ViewBag.Search as string);
-    var totalMonthly = Model.Sum(s => s.MonthlyPrice);
+    decimal totalSpent = ViewBag.TotalSubscriptionsSpent is decimal value ? value : 0m;
 }
 
 <div class="cs-page">
@@ -164,8 +164,8 @@
         @* Summary Bar *@
         <div class="sub-summary">
             <div class="sub-summary-burn">
-                <div class="sub-summary-label">Total Monthly Burn</div>
-                <div class="sub-summary-amount">@totalMonthly.ToString("0.00") RON</div>
+                <div class="sub-summary-label">Total Subscriptions Spent</div>
+                <div class="sub-summary-amount">@totalSpent.ToString("0.00") RON</div>
             </div>
             <div class="sub-summary-mid">
                 <div class="sub-summary-label">Plans Active</div>

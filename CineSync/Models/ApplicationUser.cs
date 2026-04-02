@@ -9,6 +9,7 @@ namespace CineSync.Models
 
         public int? SubscriptionId { get; set; }
         public Subscription? Subscription { get; set; }
+        public decimal? TotalSubscriptionsSpent { get; set; }
 
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
         public WatchList? WatchList { get; set; }

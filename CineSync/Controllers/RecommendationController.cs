@@ -86,13 +86,20 @@ namespace CineSync.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddToWatchList(int movieId, int currentIndex = 0)
+        [Authorize]
+        public async Task<IActionResult> AddToWatchList(int movieId, int? currentIndex = null)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             await _recommendationService.AddToWatchListAsync(userId, movieId);
 
-            TempData["Success"] = "Movie added to watchlist.";
-            return RedirectToAction("Index", new { index = currentIndex });
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer) && referer.Contains("/Movie/Details"))
+            {
+                TempData["Success"] = "Added to watchlist!";
+                return Redirect(referer);
+            }
+
+            return RedirectToAction("Index", new { index = currentIndex ?? 0 });
         }
 
         [HttpPost]

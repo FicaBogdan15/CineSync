@@ -1,0 +1,247 @@
+@model CineSync.ViewModels.StatisticsDashboardViewModel
+@{
+    ViewData["Title"] = "Statistics";
+}
+
+<div class="cs-page">
+    <div class="cs-page-header" style="margin-bottom:32px;">
+        <h1 class="cs-page-title"><span class="cs-highlight">CINE</span>SYNC STATISTICS</h1>
+        <p class="cs-page-subtitle">Live platform metrics for movies, engagement, watchlists, and subscriptions.</p>
+    </div>
+
+    <div class="stats-grid-kpi">
+        <div class="stats-kpi-card"><div class="stats-kpi-label">Movies</div><div class="stats-kpi-value">@Model.TotalMovies</div></div>
+        <div class="stats-kpi-card"><div class="stats-kpi-label">Users</div><div class="stats-kpi-value">@Model.TotalUsers</div></div>
+        <div class="stats-kpi-card"><div class="stats-kpi-label">Reviews</div><div class="stats-kpi-value">@Model.TotalReviews</div></div>
+        <div class="stats-kpi-card"><div class="stats-kpi-label">Subscription Plans</div><div class="stats-kpi-value">@Model.TotalSubscriptions</div></div>
+        <div class="stats-kpi-card"><div class="stats-kpi-label">Avg Rating</div><div class="stats-kpi-value">@Model.AverageMovieRating.ToString("0.00")</div></div>
+        <div class="stats-kpi-card"><div class="stats-kpi-label">Avg Plan Price</div><div class="stats-kpi-value">@Model.AverageSubscriptionPrice.ToString("0.00") RON</div></div>
+    </div>
+
+    <div class="stats-grid-main">
+        <section class="stats-card">
+            <h2 class="stats-title">Watchlist Health</h2>
+            <div class="stats-row"><span>Total Items</span><strong>@Model.TotalWatchlistItems</strong></div>
+            <div class="stats-row"><span>Watched Items</span><strong>@Model.TotalWatchedItems</strong></div>
+            <div class="stats-row"><span>Completion Rate</span><strong>@Model.WatchedCompletionRate.ToString("0.0")%</strong></div>
+            <div class="stats-row"><span>Added Last 30 Days</span><strong>@Model.WatchlistAddsLast30Days</strong></div>
+        </section>
+
+        <section class="stats-card">
+            <h2 class="stats-title">Engagement Signals</h2>
+            <div class="stats-row"><span>Total Likes</span><strong>@Model.TotalLikes</strong></div>
+            <div class="stats-row"><span>Total Dislikes</span><strong>@Model.TotalDislikes</strong></div>
+            <div class="stats-row"><span>Like Ratio</span><strong>@Model.LikeRatio.ToString("0.0")%</strong></div>
+            <div class="stats-row"><span>Reactions (30d)</span><strong>@Model.ReactionsLast30Days</strong></div>
+            <div class="stats-row"><span>Reviews (30d)</span><strong>@Model.ReviewsLast30Days</strong></div>
+        </section>
+
+        <section class="stats-card">
+            <h2 class="stats-title">Cart Snapshot</h2>
+            <div class="stats-row"><span>Active Carts</span><strong>@Model.ActiveCarts</strong></div>
+            <div class="stats-row"><span>Total Cart Items</span><strong>@Model.CartItemsCount</strong></div>
+        </section>
+    </div>
+
+    <div class="stats-grid-tables">
+        <section class="stats-card">
+            <h2 class="stats-title">Top Rated Movies</h2>
+            @if (!Model.TopRatedMovies.Any())
+            {
+                <div class="stats-empty">No rating data yet.</div>
+            }
+            else
+            {
+                <div class="stats-list">
+                    @foreach (var item in Model.TopRatedMovies)
+                    {
+                        <div class="stats-list-row">
+                            <div>
+                                <div class="stats-item-title">@item.Title</div>
+                                <div class="stats-item-sub">@(item.Category ?? "-") · @item.ReviewsCount reviews</div>
+                            </div>
+                            <div class="stats-badge">@item.AverageRating.ToString("0.00")</div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="stats-card">
+            <h2 class="stats-title">Most Reviewed Movies</h2>
+            @if (!Model.MostReviewedMovies.Any())
+            {
+                <div class="stats-empty">No review data yet.</div>
+            }
+            else
+            {
+                <div class="stats-list">
+                    @foreach (var item in Model.MostReviewedMovies)
+                    {
+                        <div class="stats-list-row">
+                            <div>
+                                <div class="stats-item-title">@item.Title</div>
+                                <div class="stats-item-sub">@(item.Category ?? "-") · Avg @item.AverageRating.ToString("0.00")</div>
+                            </div>
+                            <div class="stats-badge">@item.ReviewsCount</div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="stats-card">
+            <h2 class="stats-title">Top Categories by Catalog Size</h2>
+            @if (!Model.TopCategories.Any())
+            {
+                <div class="stats-empty">No category data yet.</div>
+            }
+            else
+            {
+                <div class="stats-list">
+                    @foreach (var item in Model.TopCategories)
+                    {
+                        <div class="stats-list-row">
+                            <div class="stats-item-title">@item.CategoryName</div>
+                            <div class="stats-badge">@item.MoviesCount</div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</div>
+
+<style>
+    .stats-grid-kpi {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stats-kpi-card {
+        background: var(--cs-surface);
+        border: 3px solid #111;
+        border-radius: 10px;
+        box-shadow: 4px 4px 0 #111;
+        padding: 14px;
+    }
+
+    .stats-kpi-label {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--cs-muted);
+        margin-bottom: 6px;
+    }
+
+    .stats-kpi-value {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1.35rem;
+        letter-spacing: -0.03em;
+        color: var(--cs-text);
+    }
+
+    .stats-grid-main {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .stats-grid-tables {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .stats-card {
+        background: var(--cs-surface);
+        border: 3px solid #111;
+        border-radius: 10px;
+        box-shadow: 5px 5px 0 #111;
+        padding: 16px;
+    }
+
+    .stats-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        margin: 0 0 12px 0;
+    }
+
+    .stats-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px dashed #111;
+        font-size: 0.9rem;
+    }
+
+    .stats-row:last-child {
+        border-bottom: 0;
+    }
+
+    .stats-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .stats-list-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        border: 2px solid #111;
+        border-radius: 8px;
+        padding: 10px;
+        background: var(--cs-surface-2);
+    }
+
+    .stats-item-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        color: var(--cs-text);
+    }
+
+    .stats-item-sub {
+        font-size: 0.75rem;
+        color: var(--cs-muted);
+    }
+
+    .stats-badge {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: var(--cs-yellow);
+        color: #111;
+        border: 2px solid #111;
+        border-radius: 999px;
+        padding: 4px 10px;
+        white-space: nowrap;
+    }
+
+    .stats-empty {
+        color: var(--cs-muted);
+        font-size: 0.9rem;
+    }
+
+    @@media (max-width: 1200px) {
+        .stats-grid-kpi { grid-template-columns: repeat(3, 1fr); }
+        .stats-grid-main { grid-template-columns: 1fr 1fr; }
+        .stats-grid-tables { grid-template-columns: 1fr; }
+    }
+
+    @@media (max-width: 760px) {
+        .stats-grid-kpi { grid-template-columns: repeat(2, 1fr); }
+        .stats-grid-main { grid-template-columns: 1fr; }
+    }
+</style>

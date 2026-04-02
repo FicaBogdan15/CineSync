@@ -37,6 +37,10 @@
                     <a class="cs-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "WatchList" ? "active" : "")"
                        asp-controller="WatchList" asp-action="Index">Watchlist</a>
                 </li>
+                <li>
+                    <a class="cs-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Statistics" ? "active" : "")"
+                       asp-controller="Statistics" asp-action="Index">Stats</a>
+                </li>
             </ul>
 
             <div class="cs-nav-right">

@@ -1,8 +1,735 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="home-shell">
+
+    <!-- ── HERO ──────────────────────────────────────── -->
+    <section class="home-hero">
+        <div class="home-hero-left">
+            <div class="home-hero-title-stack">
+                <div class="home-hero-title-back"></div>
+                <div class="home-hero-title-wrap">
+                    <h1 class="home-hero-title">
+                        Sync Your<br />Movie<br />World
+                    </h1>
+                </div>
+            </div>
+
+            <div class="home-hero-desc-box">
+                <div class="home-hero-desc-kicker">Movie control center</div>
+                <p class="home-hero-desc">
+                    Discover films, manage subscriptions, build watchlists, and sync recommendations across web and mobile.
+                </p>
+            </div>
+
+            <div class="home-hero-actions">
+                <a asp-controller="Movie" asp-action="Index" class="home-btn home-btn-yellow">
+                    Explore Movies
+                </a>
+                <a asp-area="Identity" asp-page="/Account/Register" class="home-btn home-btn-blue">
+                    Get Started
+                </a>
+            </div>
+        </div>
+
+        <div class="home-hero-right">
+            <div class="home-hero-poster-wrap">
+                <div class="home-hero-poster">
+                    <img src="~/Photos/screen.png" alt="Featured movie" class="home-hero-poster-img" />
+                    <div class="home-now-playing">
+                        <span class="home-now-dot"></span>
+                        Now Playing
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── FEATURES ──────────────────────────────────── -->
+    <section class="home-section">
+        <div class="home-section-label">Functional Arsenal</div>
+        <h2 class="home-section-title">Engineered for Cinephiles</h2>
+
+        <div class="home-features-grid">
+            @{
+                var features = new[] {
+                    new { Icon = "🎬", Title = "Browse Movies",         Desc = "Search and filter the catalog in seconds." },
+                    new { Icon = "⚡", Title = "Smart Recommendations", Desc = "Personalized picks from your activity." },
+                    new { Icon = "🔖", Title = "Watchlist Management",  Desc = "Move titles between To-Watch and Watched." },
+                    new { Icon = "📺", Title = "Subscription Tracking", Desc = "Track plans, costs, and active services." },
+                    new { Icon = "📱", Title = "Mobile Companion App",  Desc = "Sync your movie flow across devices." },
+                };
+            }
+            @foreach (var f in features)
+            {
+                <div class="home-feature-card">
+                    <div class="home-feature-icon">@f.Icon</div>
+                    <div class="home-feature-title">@f.Title</div>
+                    <p class="home-feature-desc">@f.Desc</p>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- ── HOW IT WORKS ───────────────────────────────── -->
+    <section class="home-section home-protocol">
+        <div style="text-align:center;margin-bottom:48px;">
+            <h2 class="home-section-title" style="display:inline-block;position:relative;">
+                The Protocol
+                <span style="position:absolute;bottom:-6px;left:0;right:0;height:6px;background:var(--cs-yellow);"></span>
+            </h2>
+        </div>
+
+        <div class="home-steps">
+            @{
+                var steps = new[] {
+                    new { Num = "01", Title = "Create Account",   Desc = "Register and sign in to unlock reactions, reviews, watchlist actions, and recommendations." },
+                    new { Num = "02", Title = "Interact",         Desc = "Search titles, open details, rate and review movies, then react with like or dislike." },
+                    new { Num = "03", Title = "Track & Optimize", Desc = "Manage watchlist states, monitor subscriptions, and use personalized suggestions." },
+                };
+            }
+            @foreach (var s in steps)
+            {
+                <div class="home-step">
+                    <div class="home-step-bg-num">@s.Num</div>
+                    <div class="home-step-num">@(Array.IndexOf(steps, s) + 1)</div>
+                    <div class="home-step-title">@s.Title</div>
+                    <p class="home-step-desc">@s.Desc</p>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- ── BENTO ──────────────────────────────────────── -->
+    <section class="home-section">
+        <div class="home-bento">
+
+            <!-- Big left -->
+            <div class="home-bento-cell home-bento-pink">
+                <div class="home-bento-label">Discover</div>
+                <h3 class="home-bento-heading">Smart<br />Recommendations</h3>
+                <p class="home-bento-text">
+                    Recommendations update from your reactions, watchlist status, and review behavior.
+                </p>
+                <div class="home-bento-tags">
+                    <span class="home-bento-tag">Likes/Dislikes</span>
+                    <span class="home-bento-tag">Watchlist Signals</span>
+                    <span class="home-bento-tag">Personalized Queue</span>
+                </div>
+                <a asp-controller="Recommendation" asp-action="Index"
+                   class="home-btn home-btn-dark" style="margin-top:auto;display:inline-block;">
+                    Try Recommendations →
+                </a>
+            </div>
+
+            <!-- Top right -->
+            <div class="home-bento-cell home-bento-blue">
+                <div class="home-bento-label">Subscriptions</div>
+                <h3 class="home-bento-heading">Track Your<br />Streaming Costs</h3>
+                <p class="home-bento-text">
+                    Browse platforms, compare plans, add to cart, and manage your active subscriptions.
+                </p>
+                <a asp-controller="Subscription" asp-action="Index"
+                   class="home-btn home-btn-dark" style="margin-top:auto;display:inline-block;">
+                    View Subscriptions →
+                </a>
+            </div>
+
+            <!-- Bottom right -->
+            <div class="home-bento-cell home-bento-lime">
+                <div class="home-bento-label">Watchlist</div>
+                <h3 class="home-bento-heading">Never Miss<br />A Film</h3>
+                <p class="home-bento-text">
+                    Keep titles organized with To-Watch and Watched states, plus quick status updates.
+                </p>
+                <a asp-controller="WatchList" asp-action="Index"
+                   class="home-btn home-btn-dark" style="margin-top:auto;display:inline-block;">
+                    My Watchlist →
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── CTA ───────────────────────────────────────── -->
+    <section class="home-cta">
+        <div class="home-cta-inner">
+            <div>
+                <h2 class="home-cta-title">Ready to Enter the Sync?</h2>
+                <p class="home-cta-sub">Create your profile and start syncing your movie workflow.</p>
+            </div>
+            <a asp-area="Identity" asp-page="/Account/Register"
+               class="home-btn home-btn-pink home-btn-lg">
+                Launch Terminal →
+            </a>
+        </div>
+    </section>
+
 </div>
+
+<style>
+    .home-shell {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 40px 80px;
+        position: relative;
+        isolation: isolate;
+    }
+
+    .home-shell::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+        background-image: repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent 95px,
+            rgba(17,17,17,0.06) 95px,
+            rgba(17,17,17,0.06) 96px
+        );
+    }
+
+    /* ── BUTTONS ─────────────────────────────────────── */
+    .home-btn {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border: 3px solid #111;
+        border-radius: 8px;
+        padding: 14px 24px;
+        box-shadow: 4px 4px 0 #111;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .home-btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 #111;
+    }
+
+    .home-btn-yellow { background: var(--cs-yellow); color: #000; }
+    .home-btn-yellow:hover { color: #000; }
+    .home-btn-blue { background: var(--cs-blue); color: #000; }
+    .home-btn-blue:hover { color: #000; }
+    .home-btn-pink { background: var(--cs-pink); color: #000; }
+    .home-btn-pink:hover { color: #000; }
+    .home-btn-dark { background: #111; color: #fff; }
+    .home-btn-dark:hover { color: #000; background: var(--cs-yellow); }
+    .home-btn-lg { padding: 18px 36px; font-size: 0.9rem; }
+
+    /* ── HERO ────────────────────────────────────────── */
+    .home-hero {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 64px;
+        align-items: center;
+        padding: 48px 0 72px;
+        border-bottom: 3px solid #111;
+        min-height: 640px;
+    }
+
+    .home-hero-left {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 22px;
+    }
+
+    .home-hero-title-stack {
+        position: relative;
+        display: inline-block;
+    }
+
+    .home-hero-title-back {
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        width: 100%;
+        height: 100%;
+        background: var(--cs-yellow);
+        border: 3px solid #111;
+        z-index: 0;
+    }
+
+    .home-hero-title-wrap {
+        position: relative;
+        z-index: 1;
+        background: #f3f3f3;
+        border: 3px solid #111;
+        box-shadow: 8px 8px 0 #111;
+        padding: 18px 22px;
+        display: inline-block;
+        max-width: 540px;
+    }
+
+    .home-hero-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: clamp(3rem, 5.5vw, 5.2rem);
+        text-transform: uppercase;
+        letter-spacing: -0.06em;
+        line-height: 0.88;
+        color: #222;
+        margin: 0;
+        text-shadow: 3px 3px 0 rgba(0,0,0,0.18);
+    }
+
+    .home-hero-desc-box {
+        background: #efefef;
+        border: 3px solid #111;
+        box-shadow: 6px 6px 0 #111;
+        max-width: 500px;
+        overflow: hidden;
+    }
+
+    .home-hero-desc-kicker {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.66rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        background: #111;
+        color: var(--cs-yellow);
+        padding: 8px 12px;
+    }
+
+    .home-hero-desc {
+        font-size: 0.98rem;
+        color: #151515;
+        line-height: 1.55;
+        margin: 0;
+        font-weight: 700;
+        padding: 14px 16px 16px;
+    }
+
+    .home-hero-actions {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+    }
+
+    .home-hero-right {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .home-hero-poster-wrap {
+        position: relative;
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .home-hero-poster {
+        position: relative;
+        width: 430px;
+        aspect-ratio: 0.88;
+        background: #111;
+        border: 3px solid #111;
+        box-shadow: 10px 10px 0 #111;
+        overflow: visible;
+        transform: rotate(-3deg);
+    }
+
+    .home-hero-poster-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: grayscale(100%) contrast(1.05);
+    }
+
+    .home-hero-poster-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 7rem;
+        opacity: 0.3;
+        background: #111;
+        color: #fff;
+        width: 100%;
+        height: 100%;
+    }
+
+    .home-now-playing {
+        position: absolute;
+        bottom: 16px;
+        left: 28px;
+        background: var(--cs-pink);
+        border: 3px solid #111;
+        box-shadow: 4px 4px 0 #111;
+        padding: 8px 18px;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transform: rotate(-4deg);
+    }
+
+    .home-now-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #111;
+        animation: pulse 1.2s infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* ── SECTIONS ────────────────────────────────────── */
+    .home-section {
+        padding: 72px 0;
+        border-bottom: 3px solid #111;
+    }
+
+    .home-section-label {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        background: #111;
+        color: var(--cs-yellow);
+        border-radius: 4px;
+        padding: 5px 14px;
+        display: inline-block;
+        margin-bottom: 16px;
+        box-shadow: 3px 3px 0 var(--cs-yellow);
+    }
+
+    .home-section-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+        text-transform: uppercase;
+        letter-spacing: -0.04em;
+        color: var(--cs-text);
+        margin-bottom: 40px;
+    }
+
+    /* ── FEATURES ────────────────────────────────────── */
+    .home-features-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 18px;
+    }
+
+    .home-feature-card {
+        background: #f2f2f2;
+        border: 3px solid #111;
+        box-shadow: 5px 5px 0 #111;
+        padding: 22px 16px 18px;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .home-feature-card:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 7px 7px 0 #111;
+    }
+
+    .home-feature-icon {
+        font-size: 1.2rem;
+        width: 42px;
+        height: 42px;
+        background: #fff;
+        border: 2px solid #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: none;
+    }
+
+    .home-feature-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        line-height: 1.05;
+        text-transform: uppercase;
+        color: #111;
+        margin: 0;
+    }
+
+    .home-feature-desc {
+        font-size: 0.82rem;
+        color: #222;
+        line-height: 1.45;
+        margin: 0;
+    }
+
+    /* ── PROTOCOL STEPS ──────────────────────────────── */
+    .home-protocol { background: transparent; }
+
+    .home-steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+    }
+
+    .home-step {
+        position: relative;
+        padding-top: 36px;
+        min-height: 220px;
+    }
+
+    .home-step-bg-num {
+        position: absolute;
+        top: -10px;
+        left: 0;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 8rem;
+        color: rgba(17,17,17,0.08);
+        letter-spacing: -0.08em;
+        line-height: 1;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .home-step-num {
+        width: 42px;
+        height: 42px;
+        background: #111;
+        color: #fff;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid #111;
+        margin-bottom: 18px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .home-step-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1.25rem;
+        text-transform: uppercase;
+        line-height: 1.05;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .home-step-desc {
+        font-size: 0.88rem;
+        color: #222;
+        line-height: 1.5;
+        margin: 0;
+        max-width: 300px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ── BENTO ───────────────────────────────────────── */
+    .home-bento {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr 0.85fr;
+        gap: 0;
+        border: 3px solid #111;
+        overflow: hidden;
+    }
+
+    .home-bento-cell {
+        min-height: 360px;
+        padding: 36px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        border-right: 3px solid #111;
+        transition: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .home-bento-cell:last-child {
+        border-right: 0;
+    }
+
+    .home-bento-cell:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .home-bento-pink { background: var(--cs-pink); }
+    .home-bento-blue { background: #d9d9d9; }
+    .home-bento-lime { background: var(--cs-blue); }
+
+    .home-bento-label {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        background: #111;
+        color: #fff;
+        border-radius: 4px;
+        padding: 4px 12px;
+        display: inline-block;
+        align-self: flex-start;
+    }
+
+    .home-bento-heading {
+        font-family: "Archivo Black", sans-serif;
+        font-size: clamp(2rem, 3vw, 3rem);
+        text-transform: uppercase;
+        letter-spacing: -0.05em;
+        color: #111;
+        line-height: 0.95;
+        margin: 0;
+    }
+
+    .home-bento-pink .home-bento-heading::after {
+        content: "";
+        display: block;
+        width: 220px;
+        height: 3px;
+        background: #111;
+        margin-top: 18px;
+    }
+
+    .home-bento-text {
+        font-size: 0.95rem;
+        color: #111;
+        line-height: 1.55;
+        margin: 0;
+        max-width: 420px;
+        flex: 1;
+    }
+
+    .home-bento-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .home-bento-tag {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        background: rgba(0,0,0,0.1);
+        color: #111;
+        border: 2px solid #111;
+        border-radius: 999px;
+        padding: 4px 12px;
+    }
+
+    /* ── CTA ─────────────────────────────────────────── */
+    .home-cta {
+        margin-top: 72px;
+    }
+
+    .home-cta-inner {
+        border: 3px solid #111;
+        box-shadow: 6px 6px 0 #111;
+        background: #f3f3f3;
+        padding: 34px 36px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 32px;
+        flex-wrap: wrap;
+        border-radius: 0;
+    }
+
+    .home-cta-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: clamp(1.6rem, 3vw, 2.4rem);
+        text-transform: uppercase;
+        letter-spacing: -0.04em;
+        color: var(--cs-text);
+        margin: 0 0 8px 0;
+    }
+
+    .home-cta-sub {
+        font-size: 0.9rem;
+        color: var(--cs-muted);
+        margin: 0;
+        font-weight: 600;
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────── */
+    @@media (max-width: 1100px) {
+        .home-features-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .home-bento {
+            grid-template-columns: 1fr;
+        }
+
+        .home-bento-cell {
+            border-right: 0;
+            border-bottom: 3px solid #111;
+        }
+
+        .home-bento-cell:last-child {
+            border-bottom: 0;
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .home-hero {
+            grid-template-columns: 1fr;
+            gap: 36px;
+            min-height: auto;
+        }
+
+        .home-hero-right {
+            display: flex;
+        }
+
+        .home-hero-poster {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .home-shell {
+            padding: 0 20px 60px;
+        }
+
+        .home-steps {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 700px) {
+        .home-features-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @@media (max-width: 540px) {
+        .home-features-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .home-hero-title {
+            font-size: 2.5rem;
+        }
+
+        .home-hero-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .home-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>

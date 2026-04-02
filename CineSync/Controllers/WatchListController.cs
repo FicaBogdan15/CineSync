@@ -24,23 +24,39 @@ namespace CineSync.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> MarkWatched(int movieId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             await _recommendationService.MarkAsWatchedAsync(userId, movieId);
 
-            TempData["Success"] = "Movie marked as watched.";
-            return RedirectToAction("Index");
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer) &&
+                (referer.Contains("/Movie/Details") || referer.Contains("/WatchList")))
+            {
+                TempData["Success"] = "Marked as watched!";
+                return Redirect(referer);
+            }
+
+            return RedirectToAction("Index", "Recommendation");
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> MarkToWatch(int movieId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             await _recommendationService.MarkAsToWatchAsync(userId, movieId);
 
-            TempData["Success"] = "Movie moved back to To Watch.";
-            return RedirectToAction("Index");
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer) &&
+                (referer.Contains("/Movie/Details") || referer.Contains("/WatchList")))
+            {
+                TempData["Success"] = "Moved to To-Watch!";
+                return Redirect(referer);
+            }
+
+            return RedirectToAction("Index", "Recommendation");
         }
 
         [HttpPost]

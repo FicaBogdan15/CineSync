@@ -1,0 +1,289 @@
+@model CineSync.Models.Subscription
+@{
+    ViewData["Title"] = "Subscription Details";
+}
+
+<div class="cs-page">
+    <div class="sub-details-head">
+        <div>
+            <div class="sub-details-kicker">Subscription Details</div>
+            <h1 class="sub-details-title">@Model.Platform?.Name - @Model.Type Plan</h1>
+            <p class="sub-details-subtitle">
+                Full plan breakdown for your streaming setup.
+            </p>
+        </div>
+        <a asp-action="Index" class="sub-details-back">Back to Subscriptions</a>
+    </div>
+
+    <div class="sub-details-layout">
+        <section class="sub-details-card sub-details-main">
+            <div class="sub-pill-row">
+                <span class="sub-pill">@Model.Type.ToUpper()</span>
+                @if (!string.IsNullOrWhiteSpace(Model.VideoQuality))
+                {
+                    <span class="sub-pill sub-pill-ghost">@Model.VideoQuality.ToUpper()</span>
+                }
+            </div>
+
+            <div class="sub-price-block">
+                <div class="sub-price-amount">@Model.MonthlyPrice.ToString("0.00")</div>
+                <div class="sub-price-unit">RON / month</div>
+            </div>
+
+            <dl class="sub-meta">
+                <div class="sub-meta-row">
+                    <dt>Platform</dt>
+                    <dd>@(Model.Platform?.Name ?? "-")</dd>
+                </div>
+                <div class="sub-meta-row">
+                    <dt>Plan Type</dt>
+                    <dd>@Model.Type</dd>
+                </div>
+                <div class="sub-meta-row">
+                    <dt>Video Quality</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.VideoQuality) ? "-" : Model.VideoQuality)</dd>
+                </div>
+                <div class="sub-meta-row">
+                    <dt>Platform Catalog Size</dt>
+                    <dd>@(Model.Platform?.AvailableMoviesCount.ToString() ?? "-") titles</dd>
+                </div>
+            </dl>
+        </section>
+
+        <aside class="sub-details-card sub-details-side">
+            <h2 class="sub-side-title">Actions</h2>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form asp-action="AddToCart" method="post">
+                    <input type="hidden" name="subscriptionId" value="@Model.SubscriptionId" />
+                    <button type="submit" class="sub-action-btn sub-action-primary">+ Add to Cart</button>
+                </form>
+
+                <a asp-action="Cart" class="sub-action-btn sub-action-secondary">View Cart</a>
+            }
+            else
+            {
+                <a asp-area="Identity" asp-page="/Account/Login" class="sub-action-btn sub-action-primary">Sign In to Add</a>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Platform?.URL))
+            {
+                <a href="@Model.Platform.URL" target="_blank" rel="noopener noreferrer" class="sub-action-btn sub-action-link">
+                    Visit Platform Site
+                </a>
+            }
+        </aside>
+    </div>
+</div>
+
+<style>
+    .sub-details-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+
+    .sub-details-kicker {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        display: inline-block;
+        background: #111;
+        color: var(--cs-yellow);
+        padding: 5px 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+
+    .sub-details-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+        text-transform: uppercase;
+        letter-spacing: -0.03em;
+        margin: 0 0 8px 0;
+    }
+
+    .sub-details-subtitle {
+        margin: 0;
+        color: var(--cs-muted);
+        font-size: 0.92rem;
+    }
+
+    .sub-details-back {
+        border: 3px solid #111;
+        border-radius: 8px;
+        box-shadow: 4px 4px 0 #111;
+        padding: 10px 16px;
+        background: var(--cs-surface);
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+    }
+
+    .sub-details-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 24px;
+    }
+
+    .sub-details-card {
+        background: var(--cs-surface);
+        border: 3px solid #111;
+        border-radius: 12px;
+        box-shadow: 5px 5px 0 #111;
+    }
+
+    .sub-details-main {
+        padding: 26px;
+    }
+
+    .sub-pill-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+    }
+
+    .sub-pill {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.66rem;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        padding: 5px 10px;
+        border: 2px solid #111;
+        border-radius: 999px;
+        background: var(--cs-yellow);
+        color: #000;
+    }
+
+    .sub-pill-ghost {
+        background: var(--cs-surface-2);
+        color: var(--cs-text);
+    }
+
+    .sub-price-block {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #111;
+        padding-bottom: 16px;
+    }
+
+    .sub-price-amount {
+        font-family: "Archivo Black", sans-serif;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1;
+        color: #111;
+    }
+
+    .sub-price-unit {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--cs-muted);
+    }
+
+    .sub-meta {
+        margin: 0;
+    }
+
+    .sub-meta-row {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px dashed #111;
+    }
+
+    .sub-meta-row:last-child {
+        border-bottom: none;
+    }
+
+    .sub-meta dt {
+        margin: 0;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--cs-muted);
+    }
+
+    .sub-meta dd {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--cs-text);
+    }
+
+    .sub-details-side {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-self: start;
+    }
+
+    .sub-side-title {
+        margin: 0 0 8px 0;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+    }
+
+    .sub-action-btn {
+        width: 100%;
+        border: 3px solid #111;
+        border-radius: 8px;
+        box-shadow: 4px 4px 0 #111;
+        padding: 12px 14px;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        display: inline-block;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .sub-action-btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 #111;
+    }
+
+    .sub-action-primary {
+        background: var(--cs-lime);
+        color: #111;
+    }
+
+    .sub-action-secondary {
+        background: var(--cs-blue);
+        color: #111;
+    }
+
+    .sub-action-link {
+        background: #111;
+        color: #fff;
+    }
+
+    @@media (max-width: 960px) {
+        .sub-details-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sub-meta-row {
+            grid-template-columns: 1fr;
+            gap: 4px;
+        }
+    }
+</style>

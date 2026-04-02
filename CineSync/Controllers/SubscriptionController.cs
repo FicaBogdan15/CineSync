@@ -23,6 +23,12 @@ namespace CineSync.Controllers
             ViewBag.SortBy = sortBy;
             ViewBag.Search = search;
 
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                ViewBag.TotalSubscriptionsSpent = await _service.GetTotalSubscriptionsSpentAsync(userId);
+            }
+
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var results = await _service.SearchSubscriptionsAsync(search);

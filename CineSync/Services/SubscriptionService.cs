@@ -67,6 +67,12 @@ namespace CineSync.Services
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
 
+        public async Task<decimal?> GetTotalSubscriptionsSpentAsync(string userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            return user?.TotalSubscriptionsSpent;
+        }
+
         public async Task AddToCartAsync(string userId, int subscriptionId)
         {
             var cart = await _context.Carts
@@ -108,11 +114,19 @@ namespace CineSync.Services
         public async Task CheckoutAsync(string userId)
         {
             var cart = await _context.Carts
-                .Include(c => c.CartItems)
+                .Include(c => c.CartItems)!
+                    .ThenInclude(ci => ci.Subscription)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
-            if (cart != null)
+            if (cart != null && cart.CartItems.Any())
             {
+                var cartTotal = cart.CartItems.Sum(ci => ci.Subscription?.MonthlyPrice ?? 0m);
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user != null)
+                {
+                    user.TotalSubscriptionsSpent = (user.TotalSubscriptionsSpent ?? 0m) + cartTotal;
+                }
+
                 _context.CartItems.RemoveRange(cart.CartItems);
                 await _context.SaveChangesAsync();
             }

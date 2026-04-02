@@ -1,208 +1,228 @@
-@model List<CineSync.Models.WatchListItem>
-
+﻿@model List<CineSync.Models.WatchListItem>
 @{
     ViewData["Title"] = "My Watchlist";
-
     var toWatch = Model.Where(i => !i.IsWatched).ToList();
     var watched = Model.Where(i => i.IsWatched).ToList();
 }
 
-<div class="cs-max-1400">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-1">My Watchlist</h2>
-            <p class="cs-muted mb-0">Keep track of movies you want to watch and those you have already seen.</p>
+<div class="cs-page">
+
+    <!-- Header -->
+    <div style="margin-bottom:48px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+            <div>
+                <div style="background:var(--cs-yellow);border:3px solid #111;border-radius:10px;box-shadow:6px 6px 0 #111;padding:12px 28px;display:inline-block;margin-bottom:16px;">
+                    <h1 style="font-family:'Archivo Black',sans-serif;font-size:clamp(2rem,4vw,3rem);text-transform:uppercase;letter-spacing:-0.03em;color:#111;margin:0;">
+                        My Watchlist
+                    </h1>
+                </div>
+                <p style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cs-muted);margin:0;">
+                    Curating your cinematic journey. Organize what's next and revisit your favorite masterpieces.
+                </p>
+            </div>
+            <a asp-controller="Recommendation" asp-action="Index"
+               style="font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-surface);color:var(--cs-text);border:3px solid #111;border-radius:8px;padding:12px 20px;box-shadow:4px 4px 0 #111;text-decoration:none;display:inline-block;white-space:nowrap;transition:transform 0.12s,box-shadow 0.12s;"
+               onmouseover="this.style.transform='translate(-2px,-2px)';this.style.boxShadow='6px 6px 0 #111'"
+               onmouseout="this.style.transform='';this.style.boxShadow='4px 4px 0 #111'">
+                ← Recommendations
+            </a>
         </div>
-        <a asp-controller="Recommendation" asp-action="Index" class="btn cs-btn cs-btn-neutral">
-            Back to Recommendations
-        </a>
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">@TempData["Success"]</div>
+        <div style="background:var(--cs-lime);border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;padding:14px 20px;margin-bottom:28px;font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;color:#111;">
+            ✓ @TempData["Success"]
+        </div>
     }
 
     @if (!Model.Any())
     {
-        <div class="alert alert-info">
-            Your watchlist is empty.
+        <div style="text-align:center;padding:80px 40px;border:3px solid #111;border-radius:20px;box-shadow:8px 8px 0 #111;background:var(--cs-surface);max-width:500px;margin:0 auto;">
+            <div style="font-size:3.5rem;margin-bottom:16px;">🔖</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:1.6rem;text-transform:uppercase;letter-spacing:-0.02em;margin-bottom:12px;">
+                Watchlist is Empty
+            </div>
+            <p style="color:var(--cs-muted);font-size:0.9rem;margin-bottom:24px;line-height:1.6;">
+                Start discovering movies and add them to your watchlist.
+            </p>
+            <a asp-controller="Recommendation" asp-action="Index"
+               style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-yellow);color:#000;border:3px solid #111;border-radius:8px;padding:14px 28px;box-shadow:4px 4px 0 #111;text-decoration:none;display:inline-block;">
+                Discover Movies →
+            </a>
         </div>
-
-        <a asp-controller="Recommendation" asp-action="Index" class="btn cs-btn cs-btn-blue">
-            Discover Recommendations
-        </a>
     }
     else
     {
-        <div class="mb-5">
-            <h3 class="fw-bold mb-3">To Watch</h3>
+        <!-- ── TO WATCH SECTION ── -->
+        <div style="margin-bottom:56px;">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;padding-bottom:16px;border-bottom:3px solid #111;">
+                <div style="width:40px;height:40px;background:#111;border:3px solid #111;border-radius:8px;box-shadow:3px 3px 0 var(--cs-yellow);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                    🔖
+                </div>
+                <h2 style="font-family:'Archivo Black',sans-serif;font-size:clamp(1.4rem,2.5vw,2rem);text-transform:uppercase;letter-spacing:-0.03em;margin:0;">
+                    To Watch
+                    <span style="font-family:'Archivo Black',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;background:var(--cs-yellow);color:#000;border:2px solid #111;border-radius:999px;padding:4px 12px;box-shadow:2px 2px 0 #111;margin-left:12px;vertical-align:middle;">
+                        @toWatch.Count
+                    </span>
+                </h2>
+            </div>
 
             @if (!toWatch.Any())
             {
-                <div class="alert alert-light border">
-                    No movies in your To Watch section.
+                <div style="border:3px dashed #111;border-radius:12px;padding:40px;text-align:center;background:var(--cs-surface);">
+                    <p style="font-family:'Archivo Black',sans-serif;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cs-muted);margin:0;">
+                        No movies in your To Watch list yet.
+                    </p>
                 </div>
             }
             else
             {
-                <div class="cs-grid-movies">
+                <div class="wl-grid">
                     @foreach (var item in toWatch)
                     {
-                        <div>
-                            <div class="cs-card movie-card p-0 overflow-hidden h-100">
+                        <div class="wl-card">
+                            <!-- Poster -->
+                            <div class="wl-poster-wrap" style="min-height:200px;">
                                 @if (!string.IsNullOrEmpty(item.Movie?.PosterPath))
                                 {
-                                    <div class="cs-image-shell">
-                                        <img src="@item.Movie.PosterPath"
-                                             class="cs-poster cs-poster-sm cs-poster-plain"
-                                             alt="@item.Movie?.Title"
-                                             width="400"
-                                             height="320"
-                                             loading="lazy"
-                                             decoding="async" />
-                                    </div>
+                                    <img src="@item.Movie.PosterPath"
+                                         alt="@item.Movie.Title"
+                                         class="wl-poster-img"
+                                         loading="lazy" decoding="async"
+                                         width="400" height="280" />
                                 }
                                 else
                                 {
-                                    <div class="cs-poster-placeholder cs-poster-sm rounded-0 border-0 shadow-none">
-                                        <span class="display-4">Movie</span>
-                                    </div>
+                                    <div class="wl-poster-placeholder">🎬</div>
                                 }
+                            <!-- Category badge on poster -->
+                            <span class="wl-poster-badge">
+                                @(item.Movie?.Category?.Name?.ToUpper() ?? "—")
+                            </span>
+                        </div>
 
-                                <div class="p-4 d-flex flex-column h-100">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h5 class="card-title mb-0">@item.Movie?.Title</h5>
-                                        <span class="cs-badge cs-badge-watchlist">To Watch</span>
-                                    </div>
+                        <!-- Body -->
+                        <div class="wl-card-body">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">
+                                <div style="font-family:'Archivo Black',sans-serif;font-size:1rem;text-transform:uppercase;letter-spacing:-0.01em;color:var(--cs-text);line-height:1.2;">
+                                    @item.Movie?.Title
+                                </div>
+                                <span style="font-family:'Archivo Black',sans-serif;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cs-muted);white-space:nowrap;flex-shrink:0;">
+                                    @item.Movie?.Year
+                                </span>
+                            </div>
 
-                                    <div class="mb-2">
-                                        <span class="cs-badge cs-badge-category me-1">@item.Movie?.Category?.Name</span>
-                                        <span class="cs-badge cs-badge-meta">@item.Movie?.Year</span>
-                                    </div>
+                            <p style="font-size:0.82rem;color:var(--cs-muted);line-height:1.5;margin:0 0 16px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                                @(string.IsNullOrWhiteSpace(item.Movie?.Description)
+                                                        ? "No description available."
+                                                        : item.Movie.Description)
+                    </p>
 
-                                    <p class="cs-muted small mb-3 cs-line-clamp-4">
-                                        @(string.IsNullOrWhiteSpace(item.Movie?.Description)
-                                            ? "No description available."
-                                            : item.Movie.Description.Length > 120
-                                                ? item.Movie.Description.Substring(0, 120) + "..."
-                                                : item.Movie.Description)
-                                    </p>
+                                <!-- Actions -->
+                                <div style="display:flex;flex-direction:column;gap:8px;">
+                                    <form asp-action="MarkWatched" method="post">
+                                        <input type="hidden" name="movieId" value="@item.MovieId" />
+                                        <button type="submit" class="wl-btn wl-btn-primary">
+                                            Move to Watched
+                                        </button>
+                                    </form>
 
-                                    <div class="mt-auto d-grid gap-2">
-                                        <form asp-action="MarkWatched" method="post">
-                                            <input type="hidden" name="movieId" value="@item.MovieId" />
-                                            <button type="submit" class="btn cs-btn cs-btn-watched w-100">
-                                                Mark as Watched
-                                            </button>
-                                        </form>
-
-                                        <a asp-controller="Movie"
-                                           asp-action="Details"
-                                           asp-route-id="@item.MovieId"
-                                           class="btn cs-btn cs-btn-blue w-100">
-                                            View Details
+                                    <div style="display:flex;gap:8px;">
+                                        <a asp-controller="Movie" asp-action="Details" asp-route-id="@item.MovieId"
+                                           class="wl-btn wl-btn-secondary" style="flex:1;text-align:center;">
+                                            Details
                                         </a>
-
                                         <form asp-action="Remove" method="post">
                                             <input type="hidden" name="movieId" value="@item.MovieId" />
-                                            <button type="submit" class="btn cs-btn cs-btn-dislike w-100">
-                                                Remove from Watchlist
+                                            <button type="submit" class="wl-btn wl-btn-danger"
+                                                    onclick="return confirm('Remove from watchlist?')"
+                                                    title="Remove">
+                                                🗑
                                             </button>
                                         </form>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div class="p-4 pt-0 cs-muted small">
-                                    Added on @item.AddedAt.ToString("dd MMM yyyy")
-                                </div>
+                            <!-- Footer -->
+                            <div style="padding:10px 18px;border-top:2px solid #111;font-family:'Archivo Black',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--cs-muted);">
+                                Added @item.AddedAt.ToString("dd MMM yyyy")
                             </div>
                         </div>
-                    }
+                        }
                 </div>
             }
         </div>
 
-        <div class="mb-4">
-            <h3 class="fw-bold mb-3">Watched</h3>
+        <!-- ── WATCHED SECTION ── -->
+        <div>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;padding-bottom:16px;border-bottom:3px solid #111;">
+                <div style="width:40px;height:40px;background:var(--cs-lime);border:3px solid #111;border-radius:8px;box-shadow:3px 3px 0 #111;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                    ✓
+                </div>
+                <h2 style="font-family:'Archivo Black',sans-serif;font-size:clamp(1.4rem,2.5vw,2rem);text-transform:uppercase;letter-spacing:-0.03em;margin:0;">
+                    Watched
+                    <span style="font-family:'Archivo Black',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;background:var(--cs-lime);color:#000;border:2px solid #111;border-radius:999px;padding:4px 12px;box-shadow:2px 2px 0 #111;margin-left:12px;vertical-align:middle;">
+                        @watched.Count
+                    </span>
+                </h2>
+            </div>
 
             @if (!watched.Any())
             {
-                <div class="alert alert-light border">
-                    No watched movies yet.
+                <div style="border:3px dashed #111;border-radius:12px;padding:40px;text-align:center;background:var(--cs-surface);">
+                    <p style="font-family:'Archivo Black',sans-serif;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cs-muted);margin:0;">
+                        No watched movies yet.
+                    </p>
                 </div>
             }
             else
             {
-                <div class="cs-grid-movies">
+                <!-- Watched uses a 4-col tighter grid -->
+                <div class="wl-grid wl-grid-watched">
                     @foreach (var item in watched)
                     {
-                        <div>
-                            <div class="cs-card movie-card p-0 overflow-hidden h-100">
+                        <div class="wl-card wl-card-watched">
+                            <!-- Poster -->
+                            <div class="wl-poster-wrap" style="aspect-ratio:4/3;min-height:200px;">
                                 @if (!string.IsNullOrEmpty(item.Movie?.PosterPath))
                                 {
-                                    <div class="cs-image-shell">
-                                        <img src="@item.Movie.PosterPath"
-                                             class="cs-poster cs-poster-sm cs-poster-plain"
-                                             alt="@item.Movie?.Title"
-                                             width="400"
-                                             height="320"
-                                             loading="lazy"
-                                             decoding="async" />
-                                    </div>
+                                    <img src="@item.Movie.PosterPath"
+                                         alt="@item.Movie.Title"
+                                         class="wl-poster-img"
+                                         loading="lazy" decoding="async"
+                                         width="400" height="300" />
                                 }
                                 else
                                 {
-                                    <div class="cs-poster-placeholder cs-poster-sm rounded-0 border-0 shadow-none">
-                                        <span class="display-4">Movie</span>
-                                    </div>
+                                    <div class="wl-poster-placeholder">🎬</div>
                                 }
+                                <!-- COMPLETED badge -->
+                                <span class="wl-completed-badge">Completed</span>
+                            </div>
 
-                                <div class="p-4 d-flex flex-column h-100">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h5 class="card-title mb-0">@item.Movie?.Title</h5>
-                                        <span class="cs-badge cs-badge-watched">Watched</span>
-                                    </div>
-
-                                    <div class="mb-2">
-                                        <span class="cs-badge cs-badge-category me-1">@item.Movie?.Category?.Name</span>
-                                        <span class="cs-badge cs-badge-meta">@item.Movie?.Year</span>
-                                    </div>
-
-                                    <p class="cs-muted small mb-3 cs-line-clamp-4">
-                                        @(string.IsNullOrWhiteSpace(item.Movie?.Description)
-                                            ? "No description available."
-                                            : item.Movie.Description.Length > 120
-                                                ? item.Movie.Description.Substring(0, 120) + "..."
-                                                : item.Movie.Description)
-                                    </p>
-
-                                    <div class="mt-auto d-grid gap-2">
-                                        <form asp-action="MarkToWatch" method="post">
-                                            <input type="hidden" name="movieId" value="@item.MovieId" />
-                                            <button type="submit" class="btn cs-btn cs-btn-neutral w-100">
-                                                Move Back to To Watch
-                                            </button>
-                                        </form>
-
-                                        <a asp-controller="Movie"
-                                           asp-action="Details"
-                                           asp-route-id="@item.MovieId"
-                                           class="btn cs-btn cs-btn-blue w-100">
-                                            View Details
-                                        </a>
-
-                                        <form asp-action="Remove" method="post">
-                                            <input type="hidden" name="movieId" value="@item.MovieId" />
-                                            <button type="submit" class="btn cs-btn cs-btn-dislike w-100">
-                                                Remove from Watchlist
-                                            </button>
-                                        </form>
-                                    </div>
+                            <!-- Body -->
+                            <div class="wl-card-body">
+                                <div style="font-family:'Archivo Black',sans-serif;font-size:0.95rem;text-transform:uppercase;letter-spacing:-0.01em;color:var(--cs-text);margin-bottom:12px;">
+                                    @item.Movie?.Title
                                 </div>
 
-                                <div class="p-4 pt-0 cs-muted small">
-                                    Watched on @(item.WatchedAt?.ToString("dd MMM yyyy") ?? "-")
+                                <div style="display:flex;gap:8px;">
+                                    <form asp-action="MarkToWatch" method="post" style="flex:1;">
+                                        <input type="hidden" name="movieId" value="@item.MovieId" />
+                                        <button type="submit" class="wl-btn wl-btn-secondary" style="width:100%;font-size:0.62rem;">
+                                            Watch Again
+                                        </button>
+                                    </form>
+                                    <form asp-action="Remove" method="post">
+                                        <input type="hidden" name="movieId" value="@item.MovieId" />
+                                        <button type="submit" class="wl-btn wl-btn-danger"
+                                                onclick="return confirm('Remove from watchlist?')"
+                                                title="Remove">
+                                            🗑
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -212,3 +232,178 @@
         </div>
     }
 </div>
+
+<style>
+    /* Grid */
+    .wl-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+    }
+
+    .wl-grid-watched {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    @@media (max-width: 1100px) {
+        .wl-grid
+
+    {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wl-grid-watched {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    }
+
+    @@media (max-width: 680px) {
+        .wl-grid, .wl-grid-watched
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    }
+
+    /* Card */
+    .wl-card {
+        background: var(--cs-surface);
+        border: 3px solid #111;
+        border-radius: 14px;
+        box-shadow: 5px 5px 0 #111;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.14s, box-shadow 0.14s;
+    }
+
+        .wl-card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 8px 8px 0 #111;
+        }
+
+    .wl-card-watched {
+        box-shadow: 4px 4px 0 #111;
+    }
+
+    /* Poster */
+    .wl-poster-wrap {
+        position: relative;
+        aspect-ratio: 3/2;
+        overflow: hidden;
+        border-bottom: 3px solid #111;
+        background: var(--cs-surface-2);
+    }
+
+    .wl-poster-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .wl-poster-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        background: var(--cs-surface-2);
+    }
+
+    .wl-poster-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        background: var(--cs-yellow);
+        color: #000;
+        border: 2px solid #111;
+        border-radius: 4px;
+        padding: 4px 10px;
+        box-shadow: 2px 2px 0 #111;
+    }
+
+    .wl-completed-badge {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        background: var(--cs-lime);
+        color: #000;
+        border: 2px solid #111;
+        border-radius: 4px;
+        padding: 4px 10px;
+        box-shadow: 2px 2px 0 #111;
+    }
+
+    /* Card body */
+    .wl-card-body {
+        padding: 16px 18px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Buttons */
+    .wl-btn {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border: 3px solid #111;
+        border-radius: 6px;
+        padding: 10px 14px;
+        cursor: pointer;
+        box-shadow: 3px 3px 0 #111;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.12s, box-shadow 0.12s;
+        text-align: center;
+        width: 100%;
+    }
+
+        .wl-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0 #111;
+        }
+
+    .wl-btn-primary {
+        background: var(--cs-yellow);
+        color: #000;
+    }
+
+        .wl-btn-primary:hover {
+            color: #000;
+        }
+
+    .wl-btn-secondary {
+        background: var(--cs-surface);
+        color: var(--cs-text);
+    }
+
+        .wl-btn-secondary:hover {
+            color: var(--cs-text);
+        }
+
+    .wl-btn-danger {
+        background: #ff5c5c;
+        color: #fff;
+        width: auto;
+        padding: 10px 14px;
+        flex-shrink: 0;
+    }
+
+        .wl-btn-danger:hover {
+            color: #fff;
+        }
+</style>

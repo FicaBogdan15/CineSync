@@ -16,6 +16,7 @@ namespace CineSync.Services
 
         // Cart
         Task<Cart?> GetCartAsync(string userId);
+        Task<decimal?> GetTotalSubscriptionsSpentAsync(string userId);
         Task AddToCartAsync(string userId, int subscriptionId);
         Task RemoveFromCartAsync(string userId, int cartItemId);
         Task CheckoutAsync(string userId);

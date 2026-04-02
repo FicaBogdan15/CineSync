@@ -27,4 +27,7 @@
 		<Content Remove="wwwroot\pdfs\**" />
 		<None Include="wwwroot\pdfs\**" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="App_Data\NewFolder\" />
+	</ItemGroup>
 </Project>
