@@ -6,14 +6,8 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
-    @* Secțiunea pentru utilizator logat *@
     <li>
-        <h6 class="dropdown-header text-primary">Salut, @(User.Identity?.Name ?? "Utilizator")!</h6>
-    </li>
-    <li>
-        <a id="manage" class="dropdown-item d-flex align-items-center" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
-            <span class="material-symbols-outlined me-2" style="font-size: 18px;">settings</span> Profilul meu
-        </a>
+        <h6 class="dropdown-header text-primary">Hello, @(User.Identity?.Name ?? "Utilizator")!</h6>
     </li>
     <li><hr class="dropdown-divider"></li>
     <li>
@@ -26,7 +20,6 @@
 }
 else
 {
-    @* Secțiunea pentru vizitatori *@
     <li>
         <a class="dropdown-item d-flex align-items-center" id="register" asp-area="Identity" asp-page="/Account/Register">
             <span class="material-symbols-outlined me-2" style="font-size: 18px;">person_add</span> Register

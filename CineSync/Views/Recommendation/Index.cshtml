@@ -349,7 +349,6 @@
     const btnWatched   = document.getElementById('btnWatched');
     const btnNext      = document.getElementById('btnNext');
 
-    // ── Anti-token pentru request CSRF ────────────────
     const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
 
     // ── Helpers ────────────────────────────────────────
@@ -412,7 +411,7 @@
             elRating.style.display = 'none';
         }
 
-        // Title — first word normal, rest italic yellow
+        // Title
         const words = (data.title || '').split(' ');
         const first = words[0] || '';
         const rest  = words.slice(1).join(' ');
