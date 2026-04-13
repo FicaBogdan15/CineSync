@@ -41,7 +41,14 @@ namespace CineSync.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("TmdbPersonId")
+                        .HasColumnType("int");
+
                     b.HasKey("ActorId");
+
+                    b.HasIndex("TmdbPersonId")
+                        .IsUnique()
+                        .HasFilter("[TmdbPersonId] IS NOT NULL");
 
                     b.ToTable("Actors");
                 });
@@ -273,7 +280,14 @@ namespace CineSync.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("TmdbPersonId")
+                        .HasColumnType("int");
+
                     b.HasKey("DirectorId");
+
+                    b.HasIndex("TmdbPersonId")
+                        .IsUnique()
+                        .HasFilter("[TmdbPersonId] IS NOT NULL");
 
                     b.ToTable("Directors");
                 });
@@ -306,6 +320,9 @@ namespace CineSync.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<int?>("TmdbId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Year")
                         .HasColumnType("int");
 
@@ -314,6 +331,10 @@ namespace CineSync.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("DirectorId");
+
+                    b.HasIndex("TmdbId")
+                        .IsUnique()
+                        .HasFilter("[TmdbId] IS NOT NULL");
 
                     b.ToTable("Movies");
                 });

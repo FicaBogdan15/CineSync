@@ -1,4 +1,5 @@
 using CineSync.Data;
+using CineSync.Integrations.Tmdb;
 using CineSync.Models;
 using CineSync.Services;
 using Microsoft.AspNetCore.Identity;
@@ -26,11 +27,18 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddMemoryCache();
+builder.Services.Configure<TmdbOptions>(builder.Configuration.GetSection("Tmdb"));
+builder.Services.AddHttpClient<ITmdbClient, TmdbClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.themoviedb.org/3/");
+});
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IPdfService,PdfService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddScoped<IStatisticsService, StatsService>();
+builder.Services.AddScoped<ITmdbImportService, TmdbImportService>();
 
 var app = builder.Build();
 
@@ -47,6 +55,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

@@ -53,6 +53,21 @@ namespace CineSync.Data
                 .HasIndex(wli => new { wli.WatchListId, wli.MovieId })
                 .IsUnique();
 
+            builder.Entity<Movie>()
+                .HasIndex(m => m.TmdbId)
+                .IsUnique()
+                .HasFilter("[TmdbId] IS NOT NULL");
+
+            builder.Entity<Actor>()
+                .HasIndex(a => a.TmdbPersonId)
+                .IsUnique()
+                .HasFilter("[TmdbPersonId] IS NOT NULL");
+
+            builder.Entity<Director>()
+                .HasIndex(d => d.TmdbPersonId)
+                .IsUnique()
+                .HasFilter("[TmdbPersonId] IS NOT NULL");
+
             // =========================
             // REVIEW RELATIONS
             // =========================

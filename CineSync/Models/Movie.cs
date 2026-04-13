@@ -7,6 +7,8 @@ namespace CineSync.Models
         [Key]
         public int MovieId { get; set; }
 
+        public int? TmdbId { get; set; }
+
         [Required]
         [StringLength(150)]
         public string Title { get; set; } = string.Empty;

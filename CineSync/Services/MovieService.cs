@@ -2,16 +2,19 @@
 using CineSync.Models;
 using CineSync.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CineSync.Services
 {
     public class MovieService : IMovieService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public MovieService(ApplicationDbContext context)
+        public MovieService(ApplicationDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         public Task<IEnumerable<Movie>> GetMoviesAsync(int? categoryId)
@@ -24,6 +27,7 @@ namespace CineSync.Services
             var query = _context.Movies
                 .Include(m => m.Category)
                 .Include(m => m.Reviews)
+                .AsNoTracking()
                 .AsQueryable();
 
             if (categoryId.HasValue)
@@ -69,6 +73,9 @@ namespace CineSync.Services
         {
             _context.Movies.Add(movie);
             await _context.SaveChangesAsync();
+
+            _cache.Remove("all_movies_search");
+            _cache.Remove($"similar_{movie.MovieId}_4");
         }
 
         public async Task UpdateMovieAsync(Movie movie)
@@ -87,6 +94,9 @@ namespace CineSync.Services
                 existing.PdfPath = movie.PdfPath;
 
             await _context.SaveChangesAsync();
+
+            _cache.Remove("all_movies_search");
+            _cache.Remove($"similar_{existing.MovieId}_4");
         }
 
         public async Task DeleteMovieAsync(int id)
@@ -118,6 +128,9 @@ namespace CineSync.Services
 
                 _context.Movies.Remove(movie);
                 await _context.SaveChangesAsync();
+
+                _cache.Remove("all_movies_search");
+                _cache.Remove($"similar_{movie.MovieId}_4");
             }
         }
 
@@ -143,12 +156,7 @@ namespace CineSync.Services
             if (string.IsNullOrWhiteSpace(query))
                 return Enumerable.Empty<(Movie, double)>();
 
-            var movies = await _context.Movies
-                .Include(m => m.Category)
-                .Include(m => m.Director)
-                .Include(m => m.Casts)!.ThenInclude(c => c.Actor)
-                .Include(m => m.Reviews)
-                .ToListAsync();
+            var movies = await GetAllMoviesForSearchAsync();
 
             var documents = movies.Select(m => new
             {
@@ -237,59 +245,102 @@ namespace CineSync.Services
 
         public async Task<IEnumerable<SimilarMovieViewModel>> GetSimilarMoviesAsync(int movieId, int limit = 4)
         {
+            var cacheKey = $"similar_{movieId}_{limit}";
+
+            if (_cache.TryGetValue(cacheKey, out IEnumerable<SimilarMovieViewModel>? cached))
+                return cached!;
+
             var movies = await _context.Movies
                 .Include(m => m.Category)
                 .Include(m => m.Director)
                 .Include(m => m.Casts)!.ThenInclude(c => c.Actor)
+                .AsNoTracking()
                 .ToListAsync();
 
             var targetMovie = movies.FirstOrDefault(m => m.MovieId == movieId);
             if (targetMovie == null)
                 return Enumerable.Empty<SimilarMovieViewModel>();
 
-            var documents = movies.Select(m => new
+            var targetActorIds = targetMovie.Casts?
+                .Select(c => c.ActorId).ToHashSet() ?? new HashSet<int>();
+
+            var targetCategoryId = targetMovie.CategoryId;
+            var targetDirectorId = targetMovie.DirectorId;
+
+            var targetTerms = Tokenize(BuildSearchContent(targetMovie));
+
+            var candidates = movies
+                .Where(m => m.MovieId != movieId &&
+                    (m.CategoryId == targetCategoryId ||
+                     (m.Casts?.Any(c => targetActorIds.Contains(c.ActorId)) == true) ||
+                     m.DirectorId == targetDirectorId))
+                .ToList();
+
+            if (candidates.Count < limit * 2)
+            {
+                var extra = movies
+                    .Where(m => m.MovieId != movieId && !candidates.Any(c => c.MovieId == m.MovieId))
+                    .Take(50)
+                    .ToList();
+                candidates.AddRange(extra);
+            }
+
+            var pool = candidates.Take(100).ToList();
+            pool.Add(targetMovie);
+
+            var documents = pool.Select(m => new
             {
                 Movie = m,
-                Content = BuildSearchContent(m),
                 Terms = Tokenize(BuildSearchContent(m))
             }).ToList();
 
+            var allTerms = documents.SelectMany(d => d.Terms).Distinct().ToList();
+            var allDocTerms = documents.Select(d => d.Terms).ToList();
             int totalDocs = documents.Count;
 
-            var allTerms = documents
-                .SelectMany(d => d.Terms)
-                .Distinct()
-                .ToList();
+            var targetDoc = documents.First(d => d.Movie.MovieId == movieId);
+            var targetVector = BuildTfidfVector(targetDoc.Terms, allDocTerms, allTerms, totalDocs);
 
-            var allDocTerms = documents.Select(x => x.Terms).ToList();
-
-            var docVectors = documents.Select(d => new
-            {
-                d.Movie,
-                Vector = BuildTfidfVector(d.Terms, allDocTerms, allTerms, totalDocs)
-            }).ToList();
-
-            var targetVector = docVectors.FirstOrDefault(v => v.Movie.MovieId == movieId)?.Vector;
-            if (targetVector == null)
-                return Enumerable.Empty<SimilarMovieViewModel>();
-
-            var similarMovies = docVectors
-                .Where(v => v.Movie.MovieId != movieId)
-                .Select(v => new SimilarMovieViewModel
+            var results = documents
+                .Where(d => d.Movie.MovieId != movieId)
+                .Select(d => new SimilarMovieViewModel
                 {
-                    MovieId = v.Movie.MovieId,
-                    Title = v.Movie.Title,
-                    PosterPath = v.Movie.PosterPath,
-                    CategoryName = v.Movie.Category?.Name,
-                    Year = v.Movie.Year,
-                    SimilarityScore = ComputeCosineSimilarity(targetVector, v.Vector)
+                    MovieId = d.Movie.MovieId,
+                    Title = d.Movie.Title,
+                    PosterPath = d.Movie.PosterPath,
+                    CategoryName = d.Movie.Category?.Name,
+                    Year = d.Movie.Year,
+                    SimilarityScore = ComputeCosineSimilarity(
+                        targetVector,
+                        BuildTfidfVector(d.Terms, allDocTerms, allTerms, totalDocs))
                 })
                 .Where(x => x.SimilarityScore > 0)
                 .OrderByDescending(x => x.SimilarityScore)
                 .Take(limit)
                 .ToList();
 
-            return similarMovies;
+            _cache.Set(cacheKey, results, TimeSpan.FromMinutes(10));
+
+            return results;
+        }
+
+        private async Task<List<Movie>> GetAllMoviesForSearchAsync()
+        {
+            const string cacheKey = "all_movies_search";
+
+            if (_cache.TryGetValue(cacheKey, out List<Movie>? cached))
+                return cached!;
+
+            var movies = await _context.Movies
+                .Include(m => m.Category)
+                .Include(m => m.Director)
+                .Include(m => m.Casts)!.ThenInclude(c => c.Actor)
+                .Include(m => m.Reviews)
+                .AsNoTracking()
+                .ToListAsync();
+
+            _cache.Set(cacheKey, movies, TimeSpan.FromMinutes(5));
+            return movies;
         }
 
         private string BuildSearchContent(Movie m)

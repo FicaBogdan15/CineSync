@@ -6,6 +6,19 @@
 }
 
 <div class="cs-page">
+    @if (TempData["Success"] != null)
+    {
+        <div class="manage-alert manage-alert-success">
+            ✓ @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["ImportError"] != null)
+    {
+        <div class="manage-alert manage-alert-error">
+            @TempData["ImportError"]
+        </div>
+    }
 
     <!-- Header -->
     <div class="manage-header">
@@ -14,6 +27,32 @@
             <h1 class="manage-title">Manage Movies</h1>
         </div>
         <a asp-action="Create" class="manage-add-btn">⊕ + Add Movie</a>
+    </div>
+
+    <div class="manage-import-panel">
+        <div>
+            <div class="manage-import-kicker">TMDb Import</div>
+            <h2 class="manage-import-title">Populate Netflix movies for Romania</h2>
+            <p class="manage-import-text">
+                Imports poster, title, release year, description, category, director, actors and cast roles from TMDb.
+            </p>
+        </div>
+
+        <form asp-action="ImportTmdb" method="post" class="manage-import-form">
+            @Html.AntiForgeryToken()
+
+            <label class="manage-import-field">
+                <span>Pages to import</span>
+                <input type="number" name="maxPages" min="1" max="25" value="6" />
+            </label>
+
+            <label class="manage-import-check">
+                <input type="checkbox" name="generatePdfs" value="true" />
+                <span>Generate PDFs after import</span>
+            </label>
+
+            <button type="submit" class="manage-import-btn">Import From TMDb</button>
+        </form>
     </div>
 
     <!-- Table -->
@@ -103,6 +142,28 @@
 </div>
 
 <style>
+    .manage-alert {
+        margin-bottom: 24px;
+        border: 3px solid #111;
+        border-radius: 10px;
+        padding: 16px 18px;
+        box-shadow: 4px 4px 0 #111;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .manage-alert-success {
+        background: var(--cs-lime);
+        color: #000;
+    }
+
+    .manage-alert-error {
+        background: #ff5c5c;
+        color: #fff;
+    }
+
     .manage-header {
         display: flex;
         align-items: center;
@@ -171,6 +232,111 @@
         box-shadow: 6px 6px 0 #111;
         background: var(--cs-blue);
         color: #000;
+    }
+
+    .manage-import-panel {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 24px;
+        align-items: center;
+        margin-bottom: 32px;
+        padding: 24px 26px;
+        border: 3px solid #111;
+        border-radius: 12px;
+        box-shadow: 5px 5px 0 #111;
+        background: var(--cs-surface);
+    }
+
+    .manage-import-kicker {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--cs-muted);
+        margin-bottom: 8px;
+    }
+
+    .manage-import-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: clamp(1.3rem, 2vw, 1.8rem);
+        text-transform: uppercase;
+        letter-spacing: -0.03em;
+        margin: 0 0 10px 0;
+        color: var(--cs-text);
+    }
+
+    .manage-import-text {
+        margin: 0;
+        color: var(--cs-muted);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        max-width: 720px;
+    }
+
+    .manage-import-form {
+        display: grid;
+        gap: 14px;
+        justify-self: end;
+        width: min(100%, 320px);
+    }
+
+    .manage-import-field {
+        display: grid;
+        gap: 8px;
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--cs-text);
+    }
+
+    .manage-import-field input {
+        width: 100%;
+        border: 3px solid #111;
+        border-radius: 8px;
+        padding: 12px 14px;
+        background: #fff;
+        color: #111;
+        font-family: "Inter", sans-serif;
+        font-size: 1rem;
+        box-shadow: 3px 3px 0 #111;
+    }
+
+    .manage-import-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--cs-text);
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .manage-import-check input {
+        width: 18px;
+        height: 18px;
+        accent-color: #111;
+    }
+
+    .manage-import-btn {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: var(--cs-pink);
+        color: #000;
+        border: 3px solid #111;
+        border-radius: 8px;
+        padding: 14px 18px;
+        box-shadow: 4px 4px 0 #111;
+        cursor: pointer;
+        transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .manage-import-btn:hover {
+        transform: translate(-2px,-2px);
+        box-shadow: 6px 6px 0 #111;
     }
 
     /* Table */
@@ -357,6 +523,15 @@
         .manage-row { grid-template-columns: 2fr 1fr 1fr 1fr; }
         .manage-table-header span:nth-child(4),
         .manage-row > div:nth-child(4) { display: none; }
+
+        .manage-import-panel {
+            grid-template-columns: 1fr;
+        }
+
+        .manage-import-form {
+            justify-self: stretch;
+            width: 100%;
+        }
     }
 
     @@media (max-width: 600px) {

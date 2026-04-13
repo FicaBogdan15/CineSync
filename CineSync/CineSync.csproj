@@ -11,6 +11,7 @@
     <PackageReference Include="itext7.bouncy-castle-adapter" Version="7.2.6" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.13" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.13">
       <PrivateAssets>all</PrivateAssets>
@@ -22,6 +23,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
+    <PackageReference Include="QRCoder" Version="1.8.0" />
   </ItemGroup>
 	<ItemGroup>
 		<Content Remove="wwwroot\pdfs\**" />

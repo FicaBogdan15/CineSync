@@ -12,15 +12,18 @@ namespace CineSync.Controllers
         private readonly IMovieService _movieService;
         private readonly IPdfService _pdfService;
         private readonly IRecommendationService _recommendationService;
+        private readonly ITmdbImportService _tmdbImportService;
 
         public MovieController(
             IMovieService movieService,
             IPdfService pdfService,
-            IRecommendationService recommendationService)
+            IRecommendationService recommendationService,
+            ITmdbImportService tmdbImportService)
         {
             _movieService = movieService;
             _pdfService = pdfService;
             _recommendationService = recommendationService;
+            _tmdbImportService = tmdbImportService;
         }
 
         public async Task<IActionResult> Index(int? categoryId, string? search, int page = 1)
@@ -202,6 +205,28 @@ namespace CineSync.Controllers
             return View(movies);
         }
 
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportTmdb(int maxPages = 6, bool generatePdfs = false, CancellationToken cancellationToken = default)
+        {
+            maxPages = Math.Clamp(maxPages, 1, 25);
+
+            try
+            {
+                var result = await _tmdbImportService.ImportNetflixCatalogAsync(maxPages, generatePdfs, cancellationToken);
+
+                TempData["Success"] =
+                    $"TMDb import finished for RO. Discovered: {result.DiscoveredMovieCount}, Created: {result.CreatedCount}, Updated: {result.UpdatedCount}, Skipped: {result.SkippedCount}, Failed: {result.FailedCount}.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ImportError"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Manage));
+        }
+
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create()
         {
@@ -273,6 +298,15 @@ namespace CineSync.Controllers
             }
 
             return RedirectToAction("Manage");
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _movieService.DeleteMovieAsync(id);
+            return RedirectToAction(nameof(Manage));
         }
 
         private void CleanModelState()

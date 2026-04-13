@@ -8,6 +8,8 @@ namespace CineSync.Models
         [Key]
         public int DirectorId { get; set; }
 
+        public int? TmdbPersonId { get; set; }
+
         [Required]
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
