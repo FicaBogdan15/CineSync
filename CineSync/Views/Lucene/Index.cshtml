@@ -1,0 +1,197 @@
+@model List<CineSync.Services.LuceneSearchResult>
+@{
+    ViewData["Title"] = "Lucene";
+    var sort = ViewBag.Sort as string ?? "desc";
+    var query = ViewBag.Query as string ?? string.Empty;
+    var hasIndex = (bool)(ViewBag.IndexExists ?? false);
+}
+
+<div class="cs-page">
+    <div style="margin-bottom:40px;">
+        <h1 class="cs-page-title">
+            <span class="cs-highlight">LUCENE</span> PDF SEARCH
+        </h1>
+        <p class="cs-page-subtitle">
+            Full-text search in generated movie specification PDFs, separate from the standard movie metadata search.
+        </p>
+    </div>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <div style="margin-bottom:28px;padding:20px 24px;border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;background:var(--cs-surface);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+                <div style="font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--cs-text);">
+                    Lucene Index Status:
+                    @if (hasIndex)
+                    {
+                        <span style="color:#22c55e;">● Active</span>
+                    }
+                    else
+                    {
+                        <span style="color:#ff5c5c;">● Not built</span>
+                    }
+                </div>
+                @if (TempData["IndexResult"] != null)
+                {
+                    <div style="font-size:0.8rem;color:var(--cs-muted);margin-top:4px;">@TempData["IndexResult"]</div>
+                }
+            </div>
+
+            <form asp-action="RebuildIndex" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit"
+                        style="font-family:'Archivo Black',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-yellow);color:#000;border:3px solid #111;border-radius:8px;padding:10px 20px;box-shadow:3px 3px 0 #111;cursor:pointer;">
+                    Rebuild Index
+                </button>
+            </form>
+        </div>
+    }
+
+    <form asp-action="Index" method="get" style="margin-bottom:40px;">
+        <div class="cs-search-bar">
+            <span class="cs-search-icon">PDF Search</span>
+            <input type="text"
+                   name="q"
+                   value="@query"
+                   class="cs-search-input"
+                   placeholder="e.g. crime thriller, Hayao Miyazaki, cast role..." />
+            <div class="cs-search-divider"></div>
+            <select name="sort" class="cs-search-select">
+                @if (sort == "desc")
+                {
+                    <option value="desc" selected>Score: High to Low</option>
+                    <option value="asc">Score: Low to High</option>
+                }
+                else
+                {
+                    <option value="desc">Score: High to Low</option>
+                    <option value="asc" selected>Score: Low to High</option>
+                }
+            </select>
+            <button type="submit" class="cs-search-btn">Search</button>
+        </div>
+    </form>
+
+    <div style="margin-bottom:32px;border:3px solid #111;border-radius:12px;box-shadow:4px 4px 0 #111;background:var(--cs-surface);overflow:hidden;">
+        <div style="background:#111;padding:12px 20px;">
+            <span style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cs-yellow);">
+                How Lucene Scores Results
+            </span>
+        </div>
+        <div style="padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;">
+            <div>
+                <div style="font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-yellow);color:#000;border:2px solid #111;border-radius:4px;padding:4px 10px;display:inline-block;margin-bottom:8px;">
+                    TF
+                </div>
+                <p style="font-size:0.82rem;color:var(--cs-muted);line-height:1.5;">
+                    Lucene rewards terms that appear more often inside the indexed PDF text, so repeated matches matter more than isolated mentions.
+                </p>
+            </div>
+            <div>
+                <div style="font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-blue);color:#000;border:2px solid #111;border-radius:4px;padding:4px 10px;display:inline-block;margin-bottom:8px;">
+                    IDF
+                </div>
+                <p style="font-size:0.82rem;color:var(--cs-muted);line-height:1.5;">
+                    Rare terms score higher than very common ones, so specific phrases from a PDF tend to rank better than generic words like "movie" or "cast".
+                </p>
+            </div>
+            <div>
+                <div style="font-family:'Archivo Black',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-pink);color:#000;border:2px solid #111;border-radius:4px;padding:4px 10px;display:inline-block;margin-bottom:8px;">
+                    Final Score
+                </div>
+                <p style="font-size:0.82rem;color:var(--cs-muted);line-height:1.5;">
+                    The final score combines TF-IDF-style relevance with field weighting. Title matches are indexed separately, so a hit in the title helps the result surface faster.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(query))
+    {
+        <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;background:var(--cs-pink);color:#000;border:2px solid #111;border-radius:999px;padding:5px 14px;box-shadow:2px 2px 0 #111;">
+                    @Model.Count results
+                </span>
+                <span style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;color:var(--cs-muted);margin-left:12px;">
+                    for "@query"
+                </span>
+            </div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cs-muted);">
+                Sorted by score: @(sort == "asc" ? "Low to High" : "High to Low")
+            </div>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div style="text-align:center;padding:60px 40px;border:3px dashed #111;border-radius:14px;background:var(--cs-surface);">
+                <div style="font-size:3rem;margin-bottom:12px;">No results</div>
+                <div style="font-family:'Archivo Black',sans-serif;font-size:1.2rem;text-transform:uppercase;letter-spacing:-0.02em;margin-bottom:8px;">
+                    No PDF matches found
+                </div>
+                <p style="color:var(--cs-muted);font-size:0.88rem;">
+                    Try a different keyword, or rebuild the Lucene index if PDFs were added recently.
+                </p>
+            </div>
+        }
+        else
+        {
+            var maxScore = Model.Max(result => result.Score);
+
+            <div style="display:flex;flex-direction:column;gap:16px;">
+                @for (var i = 0; i < Model.Count; i++)
+                {
+                    var result = Model[i];
+                    var scorePercentage = maxScore > 0 ? (result.Score / maxScore) * 100 : 0;
+
+                    <div style="border:3px solid #111;border-radius:12px;box-shadow:5px 5px 0 #111;background:var(--cs-surface);overflow:hidden;display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;">
+                        <div style="background:#111;color:var(--cs-yellow);font-family:'Archivo Black',sans-serif;font-size:1.4rem;letter-spacing:-0.04em;padding:20px 24px;display:flex;align-items:center;justify-content:center;min-width:64px;">
+                            @(i + 1)
+                        </div>
+
+                        <div style="padding:20px 24px;">
+                            <div style="font-family:'Archivo Black',sans-serif;font-size:1rem;text-transform:uppercase;letter-spacing:-0.01em;color:var(--cs-text);margin-bottom:8px;">
+                                @result.Title
+                            </div>
+                            <p style="font-size:0.85rem;color:var(--cs-muted);line-height:1.5;margin:0;font-style:italic;">
+                                @result.Fragment
+                            </p>
+                        </div>
+
+                        <div style="padding:20px 24px;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:12px;border-left:2px solid #111;min-width:180px;">
+                            <div style="text-align:right;">
+                                <div style="font-family:'Archivo Black',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cs-muted);margin-bottom:4px;">
+                                    Lucene Score
+                                </div>
+                                <div style="font-family:'Archivo Black',sans-serif;font-size:1.4rem;letter-spacing:-0.04em;color:var(--cs-text);">
+                                    @result.Score.ToString("F4")
+                                </div>
+                                <div style="width:120px;height:6px;background:var(--cs-surface-2);border:1px solid #111;border-radius:999px;margin-top:6px;overflow:hidden;">
+                                    <div style="width:@scorePercentage.ToString("F0")%;height:100%;background:@(scorePercentage > 70 ? "var(--cs-lime)" : scorePercentage > 40 ? "var(--cs-yellow)" : "var(--cs-blue)");border-radius:999px;"></div>
+                                </div>
+                            </div>
+
+                            <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+                                @if (!string.IsNullOrWhiteSpace(result.PdfPath))
+                                {
+                                    <a href="@result.PdfPath"
+                                       target="_blank"
+                                       style="font-family:'Archivo Black',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;background:#ff5c5c;color:#fff;border:2px solid #111;border-radius:6px;padding:6px 10px;text-decoration:none;text-align:center;box-shadow:2px 2px 0 #111;">
+                                        Open PDF
+                                    </a>
+                                }
+
+                                <a asp-controller="Movie"
+                                   asp-action="Details"
+                                   asp-route-id="@result.MovieId"
+                                   style="font-family:'Archivo Black',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;background:var(--cs-blue);color:#000;border:2px solid #111;border-radius:6px;padding:6px 10px;text-decoration:none;text-align:center;box-shadow:2px 2px 0 #111;">
+                                    View Movie
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>

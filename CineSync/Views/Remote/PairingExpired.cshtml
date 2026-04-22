@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "Pairing Expired";
+}
+
+<div class="cs-page" style="max-width:520px;padding:40px 24px;text-align:center;">
+    <div style="border:3px solid #111;border-radius:16px;box-shadow:8px 8px 0 #111;background:var(--cs-surface);padding:36px 28px;">
+        <div style="font-size:3rem;margin-bottom:16px;">⏳</div>
+        <h1 class="cs-page-title" style="margin-bottom:14px;">Pairing Expired</h1>
+        <p style="color:var(--cs-muted);font-size:0.95rem;line-height:1.6;margin-bottom:24px;">
+            The QR code is no longer valid. Open the remote page on desktop and generate a new code.
+        </p>
+        <a asp-controller="Remote" asp-action="Pair"
+           style="display:inline-block;background:var(--cs-yellow);color:#000;border:3px solid #111;border-radius:10px;box-shadow:4px 4px 0 #111;padding:14px 22px;font-family:'Archivo Black',sans-serif;text-transform:uppercase;letter-spacing:0.06em;text-decoration:none;">
+            Generate New QR
+        </a>
+    </div>
+</div>

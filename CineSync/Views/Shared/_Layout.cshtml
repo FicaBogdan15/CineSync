@@ -34,6 +34,14 @@
                        asp-controller="Recommendation" asp-action="Index">Recommendations</a>
                 </li>
                 <li>
+                    <a class="cs-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Lucene" ? "active" : "")"
+                       asp-controller="Lucene" asp-action="Index">Lucene</a>
+                </li>
+                <li>
+                    <a class="cs-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Remote" ? "active" : "")"
+                       asp-controller="Remote" asp-action="Pair">Remote</a>
+                </li>
+                <li>
                     <a class="cs-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "WatchList" ? "active" : "")"
                        asp-controller="WatchList" asp-action="Index">Watchlist</a>
                 </li>
@@ -68,6 +76,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/image-loading.js" asp-append-version="true"></script>
     <script src="~/js/movie-autocomplete.js" asp-append-version="true"></script>

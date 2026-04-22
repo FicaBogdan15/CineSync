@@ -325,6 +325,9 @@
     let currentIndex = @(Model?.CurrentIndex ?? 0);
     let currentMovieId = @(Model?.Movie?.MovieId ?? 0);
     let isAnimating = false;
+    let remoteConnection = null;
+
+    const remoteTokenStorageKey = 'cinesync.remote.pairingToken';
 
     // ── Elements ───────────────────────────────────────
     const card       = document.getElementById('recCard');
@@ -507,40 +510,129 @@
         }
     }
 
-    // ── Button handlers ────────────────────────────────
-    btnLike.addEventListener('click', async () => {
+    async function handleLikeAction() {
         await sendAction('like');
         showToast('👍 Liked!', 'var(--cs-yellow)');
         await loadRec(currentIndex + 1, 'anim-exit-right');
-    });
+    }
 
-    btnDislike.addEventListener('click', async () => {
+    async function handleDislikeAction() {
         await sendAction('dislike');
         showToast('👎 Disliked', 'var(--cs-pink)');
         await loadRec(currentIndex + 1, 'anim-exit-left');
-    });
+    }
 
-    btnWatchlist.addEventListener('click', async () => {
+    async function handleWatchlistAction() {
         const isActive = btnWatchlist.classList.contains('rec-action-active-watchlist');
         await sendAction(isActive ? 'unwatchlist' : 'watchlist');
         showToast(isActive ? 'Removed from watchlist' : '🔖 Added to watchlist', 'var(--cs-blue)');
-        // Reload same card to update status
         await loadRec(currentIndex, null);
-    });
+    }
 
-    btnWatched.addEventListener('click', async () => {
+    async function handleWatchedAction() {
         const isActive = btnWatched.classList.contains('rec-action-active-watched');
         await sendAction(isActive ? 'towatch' : 'watched');
         showToast(isActive ? 'Moved to To-Watch' : '✓ Marked as watched', 'var(--cs-lime)');
         await loadRec(currentIndex + 1, 'anim-exit-up');
+    }
+
+    async function handleNextAction() {
+        await loadRec(currentIndex + 1, 'anim-exit-up');
+    }
+
+    async function handleRemoteAction(action) {
+        if (!action || isAnimating) {
+            return;
+        }
+
+        switch (String(action).toLowerCase()) {
+            case 'like':
+                await handleLikeAction();
+                break;
+            case 'dislike':
+                await handleDislikeAction();
+                break;
+            case 'watchlist':
+            case 'unwatchlist':
+                await handleWatchlistAction();
+                break;
+            case 'watched':
+            case 'towatch':
+                await handleWatchedAction();
+                break;
+            case 'next':
+                await handleNextAction();
+                break;
+            case 'openrecommendations':
+                window.location.href = '/Recommendation';
+                break;
+        }
+    }
+
+    async function ensureRemoteConnection(pairingToken) {
+        if (!pairingToken || !window.signalR) {
+            return;
+        }
+
+        if (!remoteConnection) {
+            remoteConnection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/remote')
+                .withAutomaticReconnect()
+                .build();
+
+            remoteConnection.on('ReceiveAction', async (action) => {
+                await handleRemoteAction(action);
+            });
+
+            remoteConnection.onreconnected(async () => {
+                const activeToken = localStorage.getItem(remoteTokenStorageKey);
+                if (activeToken) {
+                    await remoteConnection.invoke('RegisterDesktop', activeToken);
+                }
+            });
+        }
+
+        if (remoteConnection.state === signalR.HubConnectionState.Disconnected) {
+            await remoteConnection.start();
+        }
+
+        await remoteConnection.invoke('RegisterDesktop', pairingToken);
+    }
+
+    // ── Button handlers ────────────────────────────────
+    btnLike.addEventListener('click', handleLikeAction);
+
+    btnDislike.addEventListener('click', handleDislikeAction);
+
+    btnWatchlist.addEventListener('click', handleWatchlistAction);
+
+    btnWatched.addEventListener('click', handleWatchedAction);
+
+    btnNext.addEventListener('click', async () => {
+        await handleNextAction();
     });
 
-    btnNext.addEventListener('click', () => {
-        loadRec(currentIndex + 1, 'anim-exit-up');
+    window.addEventListener('remoteAction', async (event) => {
+        await handleRemoteAction(event.detail?.action);
+    });
+
+    window.addEventListener('storage', async (event) => {
+        if (event.key === remoteTokenStorageKey && event.newValue) {
+            try {
+                await ensureRemoteConnection(event.newValue);
+            } catch (e) {
+                console.error(e);
+            }
+        }
     });
 
     // ── Initial load ───────────────────────────────────
     loadRec(@(Model?.CurrentIndex ?? 0), null);
+
+    const activeRemoteToken = localStorage.getItem(remoteTokenStorageKey);
+    if (activeRemoteToken) {
+        ensureRemoteConnection(activeRemoteToken).catch(console.error);
+    }
 
 })();
 </script>

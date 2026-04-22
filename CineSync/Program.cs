@@ -1,9 +1,13 @@
 using CineSync.Data;
+using CineSync.Hubs;
 using CineSync.Integrations.Tmdb;
 using CineSync.Models;
 using CineSync.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,11 +27,29 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.AddAuthentication()
+    .AddJwtBearer("Mobile", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddMemoryCache();
+builder.Services.AddSignalR();
 builder.Services.Configure<TmdbOptions>(builder.Configuration.GetSection("Tmdb"));
 builder.Services.AddHttpClient<ITmdbClient, TmdbClient>(client =>
 {
@@ -39,6 +61,8 @@ builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddScoped<IStatisticsService, StatsService>();
 builder.Services.AddScoped<ITmdbImportService, TmdbImportService>();
+builder.Services.AddScoped<LuceneService>();
+builder.Services.AddSingleton<PairingService>();
 
 var app = builder.Build();
 
@@ -57,6 +81,9 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<RemoteHub>("/hubs/remote");
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",

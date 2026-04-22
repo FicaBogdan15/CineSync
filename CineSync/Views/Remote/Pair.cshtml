@@ -1,0 +1,143 @@
+@{
+    ViewData["Title"] = "Phone Remote";
+}
+
+<div class="cs-page" style="max-width:600px;text-align:center;">
+    <div style="margin-bottom:32px;">
+        <h1 class="cs-page-title">
+            <span class="cs-highlight">PHONE</span> REMOTE
+        </h1>
+        <p style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cs-muted);">
+            Scan the QR code with your phone to control CineSync remotely
+        </p>
+    </div>
+
+    <div id="statusBox"
+         style="border:3px solid #111;border-radius:12px;box-shadow:5px 5px 0 #111;padding:20px;margin-bottom:28px;background:var(--cs-surface);">
+        <div id="statusText"
+             style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--cs-muted);">
+            Connecting...
+        </div>
+    </div>
+
+    <div id="qrWrap" style="display:none;">
+        <div style="border:3px solid #111;border-radius:14px;box-shadow:8px 8px 0 #111;padding:24px;background:#fff;display:inline-block;margin-bottom:20px;">
+            <img id="qrImg" src="" alt="QR Code" style="width:240px;height:240px;display:block;" />
+        </div>
+
+        <div id="tokenDisplay"
+             style="font-family:'Archivo Black',sans-serif;font-size:1.4rem;letter-spacing:0.2em;background:var(--cs-yellow);border:3px solid #111;border-radius:8px;box-shadow:4px 4px 0 #111;padding:12px 24px;display:inline-block;margin-bottom:20px;">
+        </div>
+
+        <p style="font-size:0.82rem;color:var(--cs-muted);font-weight:600;">
+            QR expires in <span id="countdown">5:00</span>
+        </p>
+    </div>
+
+    <div id="pairedBox" style="display:none;">
+        <div style="background:var(--cs-lime);border:3px solid #111;border-radius:14px;box-shadow:6px 6px 0 #111;padding:32px;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">📱</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:1.2rem;text-transform:uppercase;letter-spacing:-0.02em;margin-bottom:8px;">
+                Phone Connected!
+            </div>
+            <div id="pairedUser"
+                 style="font-family:'Archivo Black',sans-serif;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;color:#333;">
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(async function () {
+    const statusText = document.getElementById('statusText');
+    const qrWrap = document.getElementById('qrWrap');
+    const qrImg = document.getElementById('qrImg');
+    const tokenDisplay = document.getElementById('tokenDisplay');
+    const pairedBox = document.getElementById('pairedBox');
+    const pairedUser = document.getElementById('pairedUser');
+    const countdown = document.getElementById('countdown');
+    const remoteTokenStorageKey = 'cinesync.remote.pairingToken';
+
+    let isPaired = false;
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/hubs/remote')
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on('PhonePaired', (userName) => {
+        isPaired = true;
+        qrWrap.style.display = 'none';
+        pairedBox.style.display = 'block';
+        pairedUser.textContent = `Connected: ${userName}`;
+        statusText.textContent = '✓ Phone connected';
+        statusText.style.color = '#000';
+    });
+
+    connection.on('ReceiveAction', (action, movieId) => {
+        const normalizedAction = String(action || '').toLowerCase();
+
+        if (normalizedAction === 'openrecommendations') {
+            window.location.href = '@Url.Action("Index", "Recommendation")';
+            return;
+        }
+
+        window.dispatchEvent(new CustomEvent('remoteAction', {
+            detail: { action, movieId }
+        }));
+    });
+
+    connection.on('DesktopRegistered', () => {
+        statusText.textContent = 'Scan QR with your phone';
+        statusText.style.color = '#111';
+    });
+
+    try {
+        await connection.start();
+        statusText.textContent = 'Generating QR...';
+
+        const res = await fetch('/Remote/GenerateQR', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionId: connection.connectionId })
+        });
+
+        if (!res.ok) {
+            throw new Error('QR generation failed.');
+        }
+
+        const data = await res.json();
+
+        localStorage.setItem(remoteTokenStorageKey, data.token);
+
+        qrImg.src = `data:image/png;base64,${data.qrBase64}`;
+        tokenDisplay.textContent = data.token;
+        qrWrap.style.display = 'block';
+
+        await connection.invoke('RegisterDesktop', data.token);
+
+        let seconds = 300;
+        const timer = setInterval(() => {
+            seconds--;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            countdown.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                qrWrap.style.display = 'none';
+
+                if (!isPaired) {
+                    localStorage.removeItem(remoteTokenStorageKey);
+                    statusText.textContent = 'QR expired. Refresh to generate a new one.';
+                }
+            }
+        }, 1000);
+    } catch (e) {
+        statusText.textContent = 'Connection failed. Please refresh.';
+        console.error(e);
+    }
+})();
+</script>
+}

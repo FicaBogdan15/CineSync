@@ -56,7 +56,7 @@ namespace CineSync.Services
             _logger = logger;
         }
 
-        public async Task<TmdbImportResult> ImportNetflixCatalogAsync(int maxPages, bool generatePdfs, CancellationToken cancellationToken = default)
+        public async Task<global::CineSync.Services.TmdbImportResult> ImportNetflixCatalogAsync(int maxPages, bool generatePdfs, CancellationToken cancellationToken = default)
         {
             maxPages = Math.Clamp(maxPages, 1, 25);
 
@@ -71,7 +71,7 @@ namespace CineSync.Services
             var netflixPlatform = await GetOrCreateNetflixPlatformAsync(cancellationToken);
             var movieIds = await _tmdbClient.DiscoverMovieIdsByProviderAsync(providerId.Value, maxPages, cancellationToken);
 
-            var result = new TmdbImportResult
+            var result = new global::CineSync.Services.TmdbImportResult
             {
                 RequestedPages = maxPages,
                 DiscoveredMovieCount = movieIds.Count

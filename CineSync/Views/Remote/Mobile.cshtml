@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "Mobile Remote";
+    var token = (string?)ViewBag.Token ?? string.Empty;
+    var isPaired = (bool?)ViewBag.IsPaired ?? false;
+}
+
+<div class="cs-page" style="max-width:460px;padding:32px 20px;">
+    <div style="text-align:center;margin-bottom:24px;">
+        <h1 class="cs-page-title">
+            <span class="cs-highlight">PHONE</span> REMOTE
+        </h1>
+        <p style="font-family:'Archivo Black',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--cs-muted);">
+            @if (isPaired)
+            {
+                <text>Connected. Use your phone to control recommendations in real time.</text>
+            }
+            else
+            {
+                <text>Pairing in progress...</text>
+            }
+        </p>
+    </div>
+
+    <div id="mobileStatus"
+         style="margin-bottom:24px;padding:14px 18px;background:var(--cs-lime);border:3px solid #111;border-radius:12px;box-shadow:5px 5px 0 #111;font-family:'Archivo Black',sans-serif;font-size:0.76rem;text-transform:uppercase;letter-spacing:0.06em;text-align:center;">
+        @(isPaired ? "Connected to desktop" : "Waiting for pairing")
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;">
+        <button type="button" class="remote-mobile-btn" data-action="like" style="background:var(--cs-yellow);">👍 Like</button>
+        <button type="button" class="remote-mobile-btn" data-action="dislike" style="background:var(--cs-pink);">👎 Dislike</button>
+        <button type="button" class="remote-mobile-btn" data-action="watchlist" style="background:var(--cs-blue);">🔖 Watchlist</button>
+        <button type="button" class="remote-mobile-btn" data-action="next" style="background:#111;color:#fff;">▶ Next</button>
+    </div>
+</div>
+
+<style>
+.remote-mobile-btn {
+    min-height: 88px;
+    border: 3px solid #111;
+    border-radius: 16px;
+    box-shadow: 5px 5px 0 #111;
+    font-family: "Archivo Black", sans-serif;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.remote-mobile-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 2px 2px 0 #111;
+}
+</style>
+
+@section Scripts {
+<script>
+(function () {
+    const token = '@token';
+    const statusEl = document.getElementById('mobileStatus');
+    const buttons = Array.from(document.querySelectorAll('.remote-mobile-btn'));
+
+    async function sendRemoteAction(action) {
+        const res = await fetch('/Remote/Action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                token,
+                action,
+                movieId: 0
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error('Remote action failed.');
+        }
+    }
+
+    buttons.forEach((button) => {
+        button.addEventListener('click', async () => {
+            const action = button.dataset.action;
+            if (!action) {
+                return;
+            }
+
+            try {
+                await sendRemoteAction(action);
+                statusEl.textContent = `${action.toUpperCase()} sent`;
+                statusEl.style.background = 'var(--cs-lime)';
+            } catch (e) {
+                statusEl.textContent = 'Pairing expired. Reload the QR and connect again.';
+                statusEl.style.background = 'var(--cs-red)';
+                console.error(e);
+            }
+        });
+    });
+})();
+</script>
+}
